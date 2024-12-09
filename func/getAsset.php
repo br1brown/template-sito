@@ -29,7 +29,44 @@ function LoadSmallImage($file_path, $content_type)
 
         // Crea una nuova immagine ridimensionata
         $image_resized = imagecreatetruecolor($new_width, $new_height);
-        $image_original = imagecreatefromstring(file_get_contents($file_path));
+
+        // Se il tipo è PNG, GIF, WebP o altri formati con trasparenza, abilita la gestione della trasparenza
+        switch ($content_type) {
+            case 'image/jpeg':
+                $image_original = imagecreatefromjpeg($file_path);
+                break;
+            case 'image/png':
+                $image_original = imagecreatefrompng($file_path);
+                // Abilita la trasparenza
+                imagealphablending($image_resized, false);
+                imagesavealpha($image_resized, true);
+                break;
+            case 'image/gif':
+                $image_original = imagecreatefromgif($file_path);
+                // Abilita la trasparenza
+                imagealphablending($image_resized, false);
+                imagesavealpha($image_resized, true);
+                break;
+            case 'image/webp':
+                $image_original = imagecreatefromwebp($file_path);
+                // Abilita la trasparenza per WebP
+                imagealphablending($image_resized, false);
+                imagesavealpha($image_resized, true);
+                break;
+            case 'image/bmp':
+                $image_original = imagecreatefrombmp($file_path);
+                break;
+            case 'image/tiff':
+                //$image_original = imagecreatefromtiff($file_path);
+                break;
+            case 'image/x-icon':
+                //$image_original = imagecreatefromico($file_path);
+                break;
+            default:
+                // Gestire il tipo di immagine non supportato
+                http_response_code(415);
+                exit;
+        }
 
         // Copia e ridimensiona l'immagine vecchia nella nuova
         imagecopyresampled($image_resized, $image_original, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
@@ -45,6 +82,18 @@ function LoadSmallImage($file_path, $content_type)
                 break;
             case 'image/gif':
                 imagegif($image_resized);
+                break;
+            case 'image/webp':
+                imagewebp($image_resized);
+                break;
+            case 'image/bmp':
+                imagebmp($image_resized);
+                break;
+            case 'image/tiff':
+                //imagetiff($image_resized);
+                break;
+            case 'image/x-icon':
+                //imageico($image_resized);
                 break;
             default:
                 // Gestire il tipo di immagine non supportato
