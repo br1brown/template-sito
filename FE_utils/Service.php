@@ -520,7 +520,31 @@ class Service
         return "<a href=\"#\" onClick=\"openEncodedLink('$prefisso', '$urlCodificato')\" $attributi>$urlCodificato</a>";
     }
 
+    /**
+     * Verifica le credenziali dell'utente e gestisce l'autenticazione.
+     *
+     * Questa funzione viene utilizzata per autenticare un utente attraverso 
+     * Se la password è valida, imposta lo stato di autenticazione nella 
+     * sessione e salva il token Bearer. In caso contrario, restituisce un 
+     * errore per gestire una risposta adeguata.
+     *
+     * @param string $password La password inviata tramite il form di login.
+     * 
+     * @return array Ritorna un array con i seguenti dati:
+     *               - valid (bool): Indica se l'autenticazione ha avuto successo.
+     *               - token (string|null): Il token Bearer se l'autenticazione è valida.
+     *               - error (string|null): Il messaggio di errore in caso di autenticazione fallita.
+     */
+    function loggati($password): array
+    {
+        $itok = $this->callApiEndpoint("logging", "POST", ["pwd" => $password], "application/x-www-form-urlencoded");
+        if ($itok["valid"] == true) {
+            $_SESSION['logged_in'] = true;
+            $_SESSION['BearerToken'] = $itok["token"];
+        }
 
+        return $itok;
+    }
 
 
     /**

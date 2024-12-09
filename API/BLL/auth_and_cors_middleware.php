@@ -16,29 +16,33 @@ define('TOKEN_EXPIRATION', 3000);
  */
 function generaToken(string $password): array
 {
-    // Verifica della password
-    if ($password !== PASSWORD_TOKEN_CORRETTA) {
-        return ['valid' => false, 'error' => 'Password inesistente.'];
+    try {
+        // Verifica della password
+        if ($password !== PASSWORD_TOKEN_CORRETTA) {
+            throw new Exception('Password non corretta.');
+        }
+
+        $timestamp = time();
+        $dati = json_encode([
+            'password' => $password,
+            'timestamp' => $timestamp
+        ]);
+
+        if ($dati === false) {
+            throw new RuntimeException('Errore nella codifica JSON dei dati.');
+        }
+
+        $iv = substr(CRYPTO_KEY, 0, 16); // Inizializzazione del vettore (IV)
+        $token = openssl_encrypt($dati, 'aes-256-cbc', CRYPTO_KEY, 0, $iv);
+
+        if ($token === false) {
+            throw new RuntimeException('Errore durante la crittografia.');
+        }
+
+        return ['valid' => true, 'token' => $token];
+    } catch (Exception $e) {
+        return ['valid' => false, 'error' => $e->getMessage()];
     }
-
-    $timestamp = time();
-    $dati = json_encode([
-        'password' => $password,
-        'timestamp' => $timestamp
-    ]);
-
-    if ($dati === false) {
-        throw new RuntimeException('Errore nella codifica JSON dei dati.');
-    }
-
-    $iv = substr(CRYPTO_KEY, 0, 16); // Inizializzazione del vettore (IV)
-    $token = openssl_encrypt($dati, 'aes-256-cbc', CRYPTO_KEY, 0, $iv);
-
-    if ($token === false) {
-        throw new RuntimeException('Errore durante la crittografia.');
-    }
-
-    return ['valid' => true, 'token' => $token];
 }
 
 // Funzione per verificare il token
