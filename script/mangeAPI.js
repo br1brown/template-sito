@@ -35,7 +35,7 @@ function getApiUrl(action, params = null) {
  */
 function apiCall(endpoint, data, callback = null, type = 'GET', modalOk = true, dataType = 'json') {
 	data.lang = infoContesto.lang;
-	var token = getBearerToken();
+	var token = getBearertoken();
 
 	let settings = {
 		dataType: dataType,
@@ -47,7 +47,7 @@ function apiCall(endpoint, data, callback = null, type = 'GET', modalOk = true, 
 
 	if (!!infoContesto.EsternaAPI) {
 		var valori = {
-			url: getApiUrl(endpoint), data, type, dataType, XApiKey: infoContesto.APIKey, BearerToken: token
+			url: getApiUrl(endpoint), data, type, dataType, XApiKey: infoContesto.APIKey, Bearertoken: token
 		}
 
 		settings.url = infoContesto.route.gateway;
@@ -64,7 +64,7 @@ function apiCall(endpoint, data, callback = null, type = 'GET', modalOk = true, 
 		};
 
 		if (token !== null) {
-			settings.headers['BearerToken'] = token;
+			settings.headers['Bearertoken'] = token;
 		}
 
 		if (type !== 'GET' && !(!data)) {

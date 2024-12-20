@@ -540,7 +540,7 @@ class Service
         $itok = $this->callApiEndpoint("logging", "POST", ["pwd" => $password], "application/x-www-form-urlencoded");
         if ($itok["valid"] == true) {
             $_SESSION['logged_in'] = true;
-            $_SESSION['BearerToken'] = $itok["token"];
+            $_SESSION['Bearertoken'] = $itok["token"];
         }
 
         return $itok;

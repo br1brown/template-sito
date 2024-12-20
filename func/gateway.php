@@ -5,8 +5,8 @@ $data = json_decode($_POST["payload"], true);
 $headers = [
     "X-Api-Key: " . $data['XApiKey']
 ];
-if (isset($data['BearerToken']) && $data['BearerToken'] != null) {
-    $headers[] = "BearerToken: " . $data['BearerToken'];
+if (isset($data['Bearertoken']) && $data['Bearertoken'] != null) {
+    $headers[] = "Bearertoken: " . $data['Bearertoken'];
 }
 
 $risultati = ServerToServer::callURL(

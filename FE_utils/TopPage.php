@@ -71,9 +71,9 @@ try {
 
 	<script>
 
-		function getBearerToken() {
-			<?php if ($isLoggedIn && isset($_SESSION['BearerToken'])):
-				echo 'return "' . $_SESSION['BearerToken'] . '";';
+		function getBearertoken() {
+			<?php if ($isLoggedIn && isset($_SESSION['Bearertoken'])):
+				echo 'return "' . $_SESSION['Bearertoken'] . '";';
 			endif; ?>
 			return null;
 		}

@@ -169,20 +169,20 @@ function datiinput()
     }
 }
 
-// Funzione per estrarre e verificare il token dall'header "BearerToken"
+// Funzione per estrarre e verificare il token dall'header "Bearertoken"
 function possoProcedere(): void
 {
     $headers = getallheaders();
 
     // Controlla se il token è presente nell'header
-    if (!isset($headers['BearerToken'])) {
+    if (!isset($headers['Bearertoken'])) {
         http_response_code(401); // Codice HTTP 401 Unauthorized
         echo BLL\Response::retError('Token assente', true);
         exit; // Termina l'esecuzione
     }
 
     // Verifica il token
-    $res = verificaToken($headers['BearerToken']);
+    $res = verificaToken($headers['Bearertoken']);
 
     if (!$res['valid']) {
         http_response_code($res['code']); // Imposta il codice HTTP
