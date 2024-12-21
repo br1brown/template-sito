@@ -365,9 +365,6 @@ class Service
      * @param string $metodo Il metodo HTTP da utilizzare per la chiamata (ad es. 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'). Di default è 'GET'.
      * @param array $dati I dati da inviare con la richiesta, utili per i metodi come 'POST', 'PUT'.
      * @param string $contentType Il Content Type della richiesta.
-     * @param array $headerPersonalizzati Header HTTP personalizzati da includere nella richiesta.
-     * @param int $timeoutTotale Il timeout totale per la richiesta in secondi. Di default è 30 secondi.
-     * @param int $timeoutConnessione Il timeout per la connessione in secondi. Di default è 10 secondi.
      * @return array Risposta dell'API decodificata in formato array.
      * @throws InvalidArgumentException Se i parametri obbligatori non sono validi.
      * @throws Exception In caso di errore nella chiamata all'endpoint o nella risposta dell'API.
