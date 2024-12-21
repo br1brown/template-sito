@@ -141,13 +141,6 @@ class Service
     public bool $EsternaAPI;
 
     /**
-     * @var bool è loggato?
-     */
-    public bool $isLoggedIn;
-
-
-
-    /**
      * @var string Chiave dell'API di servizio
      */
     public string $APIkey;
@@ -164,9 +157,6 @@ class Service
     public function __construct()
     {
         session_start();
-
-        // Controlla se l'utente è loggato
-        $this->isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 
         // Controllo prima la variabile $_SERVER['HTTPS']
         $protocol = 'http'; // Impostazione predefinita a 'http'
@@ -532,20 +522,20 @@ class Service
      * Verifica le credenziali dell'utente e gestisce l'autenticazione.
      *
      * Questa funzione viene utilizzata per autenticare un utente attraverso 
-     * Se la password è valida, imposta lo stato di autenticazione nella 
+     * Se la i dati sono validi è valida, imposta lo stato di autenticazione nella 
      * sessione e salva il token Bearer. In caso contrario, restituisce un 
      * errore per gestire una risposta adeguata.
      *
-     * @param string $password La password inviata tramite il form di login.
+     * @param string $dati Gli eventuali dati per l'autenticazioni.
      * 
      * @return array Ritorna un array con i seguenti dati:
      *               - valid (bool): Indica se l'autenticazione ha avuto successo.
      *               - token (string|null): Il token Bearer se l'autenticazione è valida.
      *               - error (string|null): Il messaggio di errore in caso di autenticazione fallita.
      */
-    function loggati($password): array
+    function loggati($_dati): array
     {
-        $itok = $this->callApiEndpoint("logging", "POST", ["pwd" => $password], "application/x-www-form-urlencoded");
+        $itok = $this->callApiEndpoint("logging", "POST", $_dati, "application/x-www-form-urlencoded");
         if ($itok["valid"] == true) {
             $_SESSION['logged_in'] = true;
             $_SESSION['Bearertoken'] = $itok["token"];
@@ -554,6 +544,22 @@ class Service
         return $itok;
     }
 
+    /**
+     * Restituisce il token di login
+     * @return string la stringa
+     */
+    public function getToken(): string
+    {
+        return $_SESSION['Bearertoken'];
+    }
+
+    /**
+     * @var bool è loggato?
+     */
+    public function isLoggedIn(): bool
+    {
+        return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && isset($_SESSION['Bearertoken']);
+    }
 
     /**
      * Determina se è preferibile il testo di colore scuro o chiaro basato sulla luminosità del colore di sfondo.

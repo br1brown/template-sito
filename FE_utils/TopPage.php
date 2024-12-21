@@ -72,8 +72,8 @@ try {
 	<script>
 
 		function getBearertoken() {
-			<?php if ($service->isLoggedIn && isset($_SESSION['Bearertoken'])):
-				echo 'return "' . $_SESSION['Bearertoken'] . '";';
+			<?php if ($service->isLoggedIn()):
+				echo 'return "' . $service->getToken() . '";';
 			endif; ?>
 			return null;
 		}
