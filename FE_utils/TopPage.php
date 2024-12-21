@@ -72,7 +72,7 @@ try {
 	<script>
 
 		function getBearertoken() {
-			<?php if ($isLoggedIn && isset($_SESSION['Bearertoken'])):
+			<?php if ($service->isLoggedIn && isset($_SESSION['Bearertoken'])):
 				echo 'return "' . $_SESSION['Bearertoken'] . '";';
 			endif; ?>
 			return null;

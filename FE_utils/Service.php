@@ -138,7 +138,13 @@ class Service
     /**
      * @var bool URL dell'API è esterna?
      */
-    public string $EsternaAPI;
+    public bool $EsternaAPI;
+
+    /**
+     * @var bool è loggato?
+     */
+    public bool $isLoggedIn;
+
 
 
     /**
@@ -157,6 +163,11 @@ class Service
      */
     public function __construct()
     {
+        session_start();
+
+        // Controlla se l'utente è loggato
+        $this->isLoggedIn = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+
         // Controllo prima la variabile $_SERVER['HTTPS']
         $protocol = 'http'; // Impostazione predefinita a 'http'
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
