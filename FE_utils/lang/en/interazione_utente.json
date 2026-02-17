@@ -12,6 +12,7 @@
     "seleziona": "Select",
     "carica": "Upload",
     "salva": "Save",
+    "copia": "Copy",
     "condividi": "Share",
     "chiudi": "Close",
     "apri": "Open",
@@ -42,5 +43,12 @@
     "aggiorna": "Update",
     "cerca": "Search",
     "selezionaLingua": "Select Language",
-    "ottimo": "Great"
+    "ottimo": "Great",
+    "procedi": "Proceed",
+    "labelLanguages": "languages",
+    "apiStatus": "API {0}",
+    "htmlCopiato": "HTML copied",
+    "jsonCopiato": "JSON copied",
+    "online": "on line",
+    "offline": "offline"
 }

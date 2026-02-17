@@ -1,10 +1,13 @@
 :root {
+
 	--color-clone: black;
 	--color-cut: black;
 	--color-link: black;
 	--color-paste: black;
 	--color-download: black;
 	--color-mail: black;
+	--color-bell: black;
+
 	--color-youtube: #bb0000;
 	--color-facebook: #3B5998;
 	--color-instagram: #8a3ab9;
@@ -27,292 +30,240 @@
 	--color-amazon: #FF9900;
 	--color-audible: #232F3E;
 	--color-pdf: red;
-	--color-bell: black;
 	--color-telegram: #2ca5e0;
 	--color-whatsapp: #25d366;
+
 	--color-google: #4285F4;
 	--color-chromecast: black;
 	--color-chrome: black;
 	--color-android: #a4c639;
 	--color-apple: #A2AAAD;
+
 	--color-playstation: #003791;
+
 	--color-quora: #b92b27;
 	--color-yahoo: #430297;
 	--color-foursquare: #45bbff;
 	--color-airbnb: #FF5A5F;
-	--color-btc: #f2a900;
+
+	--color-bitcoin: #f2a900;
+
 }
 
-
-
 .social-icon {
+
 	color: #fff;
-	border-radius: 25px;
-	padding: 15px;
+
+	width: 50px;
+	height: 50px;
+	line-height: 50px;
+	text-align: center;
+
 	margin: 5px;
-	transition: all 0.2s ease-in-out;
-	font-weight: 300;
+
+	border-radius: 25px;
+
+	font-size: 20px;
+
+	display: inline-block;
+
+	text-shadow:
+		-1px 0 #000,
+		0 1px #000,
+		1px 0 #000,
+		0 -1px #000;
+
+	transition:
+		transform 0.2s,
+		box-shadow 0.2s,
+		opacity 0.2s,
+		border-radius 0.2s;
+
 }
 
 .social-icon:hover {
-	opacity: 0.7;
-	border-radius: 0;
+
+	opacity: 0.9;
+	transform: translateY(-3px);
+	border-radius: 12px;
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+
 }
 
-.social-icon a {
+a:has(.social-icon) {
+
 	text-decoration: none;
+
 }
 
-.fa-link {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-	/* background: var(--color-link); */
-}
+/* colori */
 
 .fa-clone {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-clone);
 }
 
-
-.fa-cut {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+.fa-scissors {
 	background: var(--color-cut);
 }
 
-
 .fa-paste {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-paste);
 }
 
-
-.fa-share {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-	background: var(--color-download);
-}
-
 .fa-download {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-download);
 }
 
 .fa-envelope {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-mail);
 }
 
-
 .fa-youtube {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-youtube);
 }
 
-
 .fa-facebook {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-facebook);
 }
 
-
 .fa-instagram {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-instagram);
 }
 
-
 .fa-twitch {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-twitch);
 }
 
-
 .fa-tiktok {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-tiktok);
 }
 
-
 .fa-snapchat {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-snapchat);
 }
 
-
-.fa-twitter {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+.fa-x-twitter {
 	background: var(--color-twitter);
 }
 
-
 .fa-vimeo {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-vimeo);
 }
 
-
 .fa-linkedin {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-linkedin);
 }
 
-
 .fa-skype {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-skype);
 }
 
-
 .fa-tumblr {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-tumblr);
 }
 
-
 .fa-pinterest {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-pinterest);
 }
 
-
 .fa-flickr {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-flickr);
 }
 
-
 .fa-dribbble {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-dribbble);
 }
 
-
-.fa-stumbleupon {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-	background: var(--color-stumbleupon);
-}
-
-
 .fa-spotify {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-spotify);
 }
 
-
 .fa-deezer {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-deezer);
 }
 
-
 .fa-itunes {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-itunes);
 }
 
-
 .fa-soundcloud {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-soundcloud);
 }
 
-
 .fa-amazon {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-amazon);
 }
 
-
 .fa-audible {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-audible);
 }
 
-
 .fa-file-pdf {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-pdf);
 }
 
-
 .fa-bell {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-bell);
 }
 
-
 .fa-telegram {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-telegram);
 }
 
-
 .fa-whatsapp {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-whatsapp);
 }
 
-
 .fa-google {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-google);
 }
 
-
 .fa-chromecast {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-chromecast);
 }
 
-
 .fa-chrome {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-chrome);
 }
 
-
 .fa-android {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-android);
 }
 
-
 .fa-apple {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-apple);
 }
 
-
 .fa-playstation {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-playstation);
 }
 
-
 .fa-quora {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-quora);
 }
 
-
 .fa-yahoo {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-yahoo);
 }
 
-
 .fa-foursquare {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-foursquare);
 }
 
-
 .fa-airbnb {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	background: var(--color-airbnb);
 }
 
+.fa-bitcoin {
+	background: var(--color-bitcoin);
+}
 
-.fa-btc {
-	text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-	background: var(--color-btc);
+
+/* fix trattini link */
+
+a:has(> .social-icon)::before,
+a:has(> .social-icon)::after {
+
+	content: none !important;
+
 }
