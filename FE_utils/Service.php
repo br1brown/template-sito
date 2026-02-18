@@ -26,13 +26,9 @@ class Service
         $data = array_filter($this->settings, function ($key) {
             return !in_array($key, $this->excludeKeys);
         }, ARRAY_FILTER_USE_KEY);
-        $data["description"] = "";
 
-        if (isset($this->settings["description"])) {
-            if (is_array($this->settings["description"]) && isset($this->settings["description"][$this->currentLang()])) {
-                $data["description"] = $this->settings["description"][$this->currentLang()];
-            }
-        }
+        $data["description"] = $this->settings["description"][$this->currentLang()] ?? "";
+
         if (!isset($data['colorTema']) || empty($data['colorTema'])) {
             $data['colorTema'] = "#606060";
         }
@@ -64,6 +60,18 @@ class Service
             $escludiroutes[] = "gateway.php";
 
         $data['routes'] = $this->prepareAssets("func", "php", excludeFiles: $escludiroutes);
+
+        unset(
+            $data['GLOBALS'],
+            $data['_SERVER'],
+            $data['_GET'],
+            $data['_POST'],
+            $data['_FILES'],
+            $data['_COOKIE'],
+            $data['_SESSION'],
+            $data['_REQUEST'],
+            $data['_ENV']
+        );
 
         return $data;
     }
