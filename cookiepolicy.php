@@ -2,7 +2,7 @@
 $title = "cookiepolicy";
 $singledescription = "";
 $sz_mail = "";
-$sz_data = "22 feb 2024";
+$sz_data = "18 feb 2026";
 
 $pagina = [
     [

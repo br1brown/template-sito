@@ -1,5 +1,5 @@
 <?php
-include ('TopPage.php');
+include('TopPage.php');
 $current_lang = $service->currentLang();
 $sezioniComuni = [
     [
@@ -56,7 +56,7 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
                     <hr>
                     <footer>
                         <p class="px-3 ">
-                            <?= $service->traduci("ultimaRevisione") . ": <code class=\"badge badge-secondary\">" . $sz_data . "</code>"; ?>
+                            <?= $service->traduci("ultimaRevisione") . ": <code class=\"badge p-1 text-bg-dark\">" . $sz_data . "</code>"; ?>
                         </p>
                     </footer>
                 </div>
@@ -64,6 +64,6 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
         </div>
     </div>
 </div>
-<?php include ('BottomPage.php'); ?>
+<?php include('BottomPage.php'); ?>
 
 </html>
