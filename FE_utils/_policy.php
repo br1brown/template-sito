@@ -20,7 +20,7 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
             <article>
                 <div class="col-12 offset-md-1 col-md-10 p-3">
                     <?php
-                    echo "<header><h1 class='text-right'>" . $service->traduci($title) . "</h1></header><section>\n";
+                    echo "<header><h1 class='text-end'>" . $service->traduci($title) . "</h1></header><section>\n";
                     foreach ($sezioniComplessive as $sezione) {
                         foreach ($sezione as $chiave => $testo) {
                             if (isset($testo[$current_lang])) {
@@ -38,7 +38,7 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
                         </h4>
                         <p>
                             <?php
-                            $htmlMAIL = "<span class=\"badge badge-light\">" . $service->creaLinkCodificato($sz_mail, 'mailto:') . "</span>";
+                            $htmlMAIL = "<span class=\"badge text-bg-light\">" . $service->creaLinkCodificato($sz_mail, 'mailto:') . "</span>";
                             switch ($current_lang) {
                                 case "it":
                                     echo "Per domande riguardanti la nostra Informativa, potete contattarci all'indirizzo email: " . $htmlMAIL;
