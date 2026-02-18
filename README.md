@@ -1,4 +1,4 @@
-# Template Sito Web
+﻿# Template Sito Web
 
 Template PHP per siti web con backend API integrato, sistema di traduzioni multilingua, gestione asset, autenticazione Bearer e supporto PWA.
 
@@ -11,15 +11,15 @@ Template PHP per siti web con backend API integrato, sistema di traduzioni multi
 
 1. [Struttura delle cartelle](#struttura-delle-cartelle)
 2. [Configurazione iniziale](#configurazione-iniziale)
-3. [Frontend — come creare una pagina](#frontend--come-creare-una-pagina)
-4. [Sistema di traduzioni](#sistema-di-traduzioni)
-5. [Asset](#asset)
-6. [Backend API — come creare un endpoint](#backend-api--come-creare-un-endpoint)
-7. [Autenticazione](#autenticazione)
-8. [Effetto fumo](#effetto-fumo)
-9. [Policy](#policy)
-10. [Creare un nuovo progetto dal template](#creare-un-nuovo-progetto-dal-template)
-
+3. [Frontend â€” come creare una pagina](#frontend--come-creare-una-pagina)
+4. [Features del template](#features-del-template)
+5. [Sistema di traduzioni](#sistema-di-traduzioni)
+6. [Asset](#asset)
+7. [Backend API â€” come creare un endpoint](#backend-api--come-creare-un-endpoint)
+8. [Autenticazione](#autenticazione)
+9. [Effetto fumo](#effetto-fumo)
+10. [Policy](#policy)
+11. [Creare un nuovo progetto dal template](#creare-un-nuovo-progetto-dal-template)
 ---
 
 ## Struttura delle cartelle
@@ -210,6 +210,55 @@ inizializzazioneApp.then(() => {
     // il codice qui ha accesso a infoContesto, traduci(), callAPI(), ecc.
 });
 ```
+
+---
+
+## Features del template
+
+Queste sono alcune feature principali offerte dal template, mostrate anche con esempi pratici nella home (`index.php`).
+
+### 1) Markdown to HTML
+
+- Campo input: `#markdown_input`
+- Anteprima renderizzata: `#markdown_output`
+- HTML finale: `#markdown_html`
+
+Come funziona:
+
+1. Scrivi Markdown nel textarea.
+2. Dopo ~300ms di pausa viene chiamato `func/markparsing.php` (route `infoContesto.route.markparsing`).
+3. L'HTML restituito viene mostrato in anteprima e copiato nell'output HTML.
+4. Puoi copiare sia il testo preview (`#copy_markdown_preview`) sia l'HTML (`#copy_markdown_html`).
+
+### 2) Generazione di immagini dinamiche
+
+- Builder JS: `script/imgBuilder.js` (classe `CreaImmagine`)
+- Controlli UI: testo, font, dimensione, colore testo, sfondo, larghezza
+- Preview: `#img_generica`
+
+Come usarlo:
+
+1. Modifica i campi del pannello "Image Canvas Builder".
+2. L'immagine viene rigenerata in tempo reale su canvas e mostrata nella preview.
+3. Usa `Salva` (`#download_image`) per scaricare PNG.
+4. Usa `Condividi` (`#share_image`) per inviare l'immagine tramite Web Share API (se disponibile).
+
+### 3) Menu di contesto (click destro desktop)
+
+- Target demo: `#menu_context_target`
+- Setup: `applicaMenu('#menu_context_target', false, [...])`
+- Utility: `script/manageMenu.js`
+
+Con `false` come secondo parametro, il menu si apre su evento `contextmenu` (tasto destro da desktop). Le azioni demo incluse sono: condividi, torna in alto, salva JSON tecnico, copia URL e info.
+
+### 4) Strumento di condivisione mobile
+
+La home usa `navigator.share` in due punti:
+
+- nel menu contestuale (condivisione di titolo/testo/url pagina),
+- nel builder immagine (`imageCreata.condividiImmagine("")`) per condividere il file PNG generato.
+
+Fallback automatico: se Web Share API non e supportata, il codice copia l'URL negli appunti e mostra un feedback utente.
 
 ---
 

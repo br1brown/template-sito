@@ -26,11 +26,22 @@ if ($data === null || !isset($data['url'], $data['type'], $data['XApiKey'])) {
     exit;
 }
 
-// Protezione SSRF: verifica che l'URL richiesto sia sotto l'endpoint API configurato
+// Protezione SSRF: verifica che l'URL richiesto abbia lo stesso host dell'endpoint API configurato
+// Confronto sull'host (non sul prefisso stringa) per evitare bypass tipo api.example.com.attacker.com
 $service = new Service();
 $apiBase = rtrim($service->urlAPI, '/');
 
-if (!str_starts_with($data['url'], $apiBase)) {
+$parsedApiBase = parse_url($apiBase);
+$parsedUrl     = parse_url($data['url']);
+
+$hostOk   = isset($parsedApiBase['host'], $parsedUrl['host'])
+    && strtolower($parsedUrl['host']) === strtolower($parsedApiBase['host']);
+$schemeOk = isset($parsedApiBase['scheme'], $parsedUrl['scheme'])
+    && strtolower($parsedUrl['scheme']) === strtolower($parsedApiBase['scheme']);
+$pathOk   = isset($parsedApiBase['path'], $parsedUrl['path'])
+    && str_starts_with($parsedUrl['path'], $parsedApiBase['path']);
+
+if (!$hostOk || !$schemeOk || !$pathOk) {
     http_response_code(403);
     echo json_encode(['status' => 'error', 'message' => 'URL non autorizzato: il gateway accetta solo chiamate verso l\'endpoint API configurato']);
     exit;

@@ -199,7 +199,13 @@ class Service
 
         // Caricamento impostazioni dal file JSON (percorso assoluto per compatibilità hosting)
         $settingsPath = dirname($_SERVER['DOCUMENT_ROOT'] . $_SERVER['PHP_SELF']) . '/websettings.json';
+        if (!file_exists($settingsPath)) {
+            throw new \RuntimeException("File di configurazione websettings.json non trovato in: $settingsPath");
+        }
         $this->settings = json_decode(file_get_contents($settingsPath), true);
+        if (!is_array($this->settings)) {
+            throw new \RuntimeException("websettings.json non valido o malformato.");
+        }
 
         $this->caricaLingua();
 
@@ -220,8 +226,12 @@ class Service
     private function caricaLingua(): void
     {
         $lang = strtolower($this->settings['lang']);
-        if (isset($_GET["lang"]) && !empty($_GET["lang"]))
-            $lang = strtolower($_GET["lang"]);
+        if (isset($_GET["lang"]) && !empty($_GET["lang"])) {
+            $candidate = strtolower(preg_replace('/[^a-z]/i', '', $_GET["lang"]));
+            $lingueDisponibili = Traduzione::listaLingue(__DIR__ . "/lang");
+            if (in_array($candidate, $lingueDisponibili, true))
+                $lang = $candidate;
+        }
 
         $this->pathLang = $this->baseURL("func/getLang?lang=" . $lang);
         $this->_traduzione = new Traduzione($lang);
@@ -278,7 +288,9 @@ class Service
     {
         $getFileList = function ($directory, $extension, $excludeFiles) {
             $fileList = array();
-            $absolutePath = realpath($directory) . '/';
+            $resolved = realpath($directory);
+            if ($resolved === false) return $fileList;
+            $absolutePath = $resolved . '/';
             foreach (glob($absolutePath . "*." . $extension) as $file) {
                 $relativePath = str_replace($absolutePath, '', $file);
                 $fileName = basename($relativePath);

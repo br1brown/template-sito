@@ -125,7 +125,9 @@ class Repository
             $fileContent = $jsonData;
         }
 
-        file_put_contents($filename, $fileContent);
+        if (file_put_contents($filename, $fileContent) === false) {
+            throw new \RuntimeException("Impossibile scrivere il file: $filename");
+        }
     }
 
     public static function getDefaultLang(): string
