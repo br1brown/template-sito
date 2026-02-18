@@ -193,10 +193,8 @@ $totalLanguages = count($lingueDisponibili);
 											</p>
 											<div class="polaroid-wrapper">
 												<div class="polaroid ruotadestra d-inline-block shadow-lg">
-													<img id="img_generica"
-														src="https://via.placeholder.com/550x360/D3D3D3"
-														class="img-fluid rounded border mb-2" alt="Preview"
-														width="550" height="360">
+													<img id="img_generica" class="img-fluid rounded border mb-2"
+														alt="Preview" width="550" height="360">
 													<p class="caption text-dark fst-italic py-2">
 														<?= $service->traduci("imagePreviewTitle") ?>
 													</p>
@@ -369,178 +367,178 @@ $totalLanguages = count($lingueDisponibili);
 	   Questo script inline è sincrono ma avvolge tutto in window.load,
 	   che scatta dopo i defer, garantendo che inizializzazioneApp sia disponibile. */
 	window.addEventListener('load', function () {
-	inizializzazioneApp.then(() => {
-		let imageCreata = null;
-		let markdownRenderTimer = null;
+		inizializzazioneApp.then(() => {
+			let imageCreata = null;
+			let markdownRenderTimer = null;
 
-		function buildImage() {
-			const testo = $('#img_text').val() || traduci('imgDinamica');
-			const bgColor = $('#img_bg_color').val() || '<?= $colori["colorTema"] ?>';
-			const textColor = $('#img_txt_color').val() || '<?= $isDarkTextPreferred ? "#000000" : "#ffffff" ?>';
-			const fontSize = parseInt($('#img_font_size').val(), 10) || 50;
-			const width = parseInt($('#img_width').val(), 10) || 900;
-			const fontFamily = $('#img_font_family').val() || 'Verdana';
+			function buildImage() {
+				const testo = $('#img_text').val() || traduci('imgDinamica');
+				const bgColor = $('#img_bg_color').val() || '<?= $colori["colorTema"] ?>';
+				const textColor = $('#img_txt_color').val() || '<?= $isDarkTextPreferred ? "#000000" : "#ffffff" ?>';
+				const fontSize = parseInt($('#img_font_size').val(), 10) || 50;
+				const width = parseInt($('#img_width').val(), 10) || 900;
+				const fontFamily = $('#img_font_family').val() || 'Verdana';
 
-			imageCreata = new CreaImmagine(testo, bgColor, textColor)
-				.setFontsize(fontSize)
-				.setLarghezza(width)
-				.setFont(fontFamily)
-				.costruisci();
+				imageCreata = new CreaImmagine(testo, bgColor, textColor)
+					.setFontsize(fontSize)
+					.setLarghezza(width)
+					.setFont(fontFamily)
+					.costruisci();
 
-			$('#img_generica').attr('src', imageCreata.urlImmagine());
-		}
-
-		function resetImageBuilder() {
-			$('#img_text').val(traduci('imgDinamica'));
-			$('#img_bg_color').val('<?= htmlspecialchars($colori["colorTema"]) ?>');
-			$('#img_txt_color').val('<?= $isDarkTextPreferred ? "#000000" : "#ffffff" ?>');
-			$('#img_font_size').val(50);
-			$('#img_width').val(900);
-			$('#img_font_family').val('Verdana');
-			buildImage();
-		}
-
-		function renderMarkdown() {
-			const txt = $('#markdown_input').val();
-			$.get(infoContesto.route.markparsing, { text: txt }, function (html) {
-				$('#markdown_output').html(html);
-				$('#markdown_html').val(html);
-			});
-		}
-
-		applicaMenu('#menu_context_target', false, [
-			{
-				text: traduci("condividi"),
-				function: function () {
-					const testo = $('#menu_context_target').text().trim();
-					const shareData = {
-						title: document.title,
-						text: testo,
-						url: window.location.href
-					};
-					if (navigator.share) {
-						navigator.share(shareData).then(() => {
-						});
-						return;
-					}
-					copyToClipboard(window.location.href).then(() => {
-						Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
-					});
-				}
-			},
-			{
-				text: traduci("home"),
-				function: function () {
-					window.scrollTo({ top: 0, behavior: "smooth" });
-				}
-			},
-			{
-				text: traduci("salva") + " JSON",
-				function: function () {
-					const navEntries = performance.getEntriesByType("navigation");
-					const payload = {
-						pageTitle: document.title,
-						currentUrl: window.location.href,
-						origin: window.location.origin,
-						pathname: window.location.pathname,
-						queryString: window.location.search,
-						hash: window.location.hash,
-						referrer: document.referrer || null,
-						language: navigator.language,
-						userAgent: navigator.userAgent,
-						historyLength: window.history.length,
-						viewport: {
-							width: window.innerWidth,
-							height: window.innerHeight
-						},
-						navigation: navEntries.length ? {
-							type: navEntries[0].type,
-							durationMs: Math.round(navEntries[0].duration)
-						} : null,
-						generatedAt: new Date().toISOString()
-					};
-					const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-					const link = document.createElement("a");
-					link.href = URL.createObjectURL(blob);
-					link.download = "site-technical-info.json";
-					document.body.appendChild(link);
-					link.click();
-					document.body.removeChild(link);
-					URL.revokeObjectURL(link.href);
-					Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
-				}
-			},
-			{
-				text: traduci("copia") + " URL",
-				function: function () {
-					copyToClipboard(window.location.href).then(() => {
-						Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
-					});
-				}
-			},
-			{
-				text: traduci("info"),
-				function: function () {
-					Swal.fire({
-						title: traduci("info"),
-						text: traduci("contextMenuAlertMessage"),
-						icon: "info",
-						confirmButtonText: traduci("chiudi")
-					});
-				}
+				$('#img_generica').attr('src', imageCreata.urlImmagine());
 			}
-		]);
 
-		$('#img_text, #img_bg_color, #img_txt_color, #img_font_size, #img_width, #img_font_family').on('input change', buildImage);
-		$('#share_image').on('click', function () {
-			if (imageCreata) imageCreata.condividiImmagine("");
-		});
-		$('#download_image').on('click', function () {
-			if (imageCreata) imageCreata.scaricaImmagine();
-		});
+			function resetImageBuilder() {
+				$('#img_text').val(traduci('imgDinamica'));
+				$('#img_bg_color').val('<?= htmlspecialchars($colori["colorTema"]) ?>');
+				$('#img_txt_color').val('<?= $isDarkTextPreferred ? "#000000" : "#ffffff" ?>');
+				$('#img_font_size').val(50);
+				$('#img_width').val(900);
+				$('#img_font_family').val('Verdana');
+				buildImage();
+			}
 
-		$('#markdown_input').on('input', function () {
-			clearTimeout(markdownRenderTimer);
-			markdownRenderTimer = setTimeout(renderMarkdown, 300);
-		});
-		$('#copy_markdown_preview').on('click', function () {
-			copyToClipboard($('#markdown_output').text()).then(() => {
-				Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
+			function renderMarkdown() {
+				const txt = $('#markdown_input').val();
+				$.get(infoContesto.route.markparsing, { text: txt }, function (html) {
+					$('#markdown_output').html(html);
+					$('#markdown_html').val(html);
+				});
+			}
+
+			applicaMenu('#menu_context_target', false, [
+				{
+					text: traduci("condividi"),
+					function: function () {
+						const testo = $('#menu_context_target').text().trim();
+						const shareData = {
+							title: document.title,
+							text: testo,
+							url: window.location.href
+						};
+						if (navigator.share) {
+							navigator.share(shareData).then(() => {
+							});
+							return;
+						}
+						copyToClipboard(window.location.href).then(() => {
+							Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
+						});
+					}
+				},
+				{
+					text: traduci("home"),
+					function: function () {
+						window.scrollTo({ top: 0, behavior: "smooth" });
+					}
+				},
+				{
+					text: traduci("salva") + " JSON",
+					function: function () {
+						const navEntries = performance.getEntriesByType("navigation");
+						const payload = {
+							pageTitle: document.title,
+							currentUrl: window.location.href,
+							origin: window.location.origin,
+							pathname: window.location.pathname,
+							queryString: window.location.search,
+							hash: window.location.hash,
+							referrer: document.referrer || null,
+							language: navigator.language,
+							userAgent: navigator.userAgent,
+							historyLength: window.history.length,
+							viewport: {
+								width: window.innerWidth,
+								height: window.innerHeight
+							},
+							navigation: navEntries.length ? {
+								type: navEntries[0].type,
+								durationMs: Math.round(navEntries[0].duration)
+							} : null,
+							generatedAt: new Date().toISOString()
+						};
+						const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+						const link = document.createElement("a");
+						link.href = URL.createObjectURL(blob);
+						link.download = "site-technical-info.json";
+						document.body.appendChild(link);
+						link.click();
+						document.body.removeChild(link);
+						URL.revokeObjectURL(link.href);
+						Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
+					}
+				},
+				{
+					text: traduci("copia") + " URL",
+					function: function () {
+						copyToClipboard(window.location.href).then(() => {
+							Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
+						});
+					}
+				},
+				{
+					text: traduci("info"),
+					function: function () {
+						Swal.fire({
+							title: traduci("info"),
+							text: traduci("contextMenuAlertMessage"),
+							icon: "info",
+							confirmButtonText: traduci("chiudi")
+						});
+					}
+				}
+			]);
+
+			$('#img_text, #img_bg_color, #img_txt_color, #img_font_size, #img_width, #img_font_family').on('input change', buildImage);
+			$('#share_image').on('click', function () {
+				if (imageCreata) imageCreata.condividiImmagine("");
 			});
-		});
-		$('#copy_markdown_html').on('click', function () {
-			copyToClipboard($('#markdown_html').val()).then(() => {
-				Swal.fire(traduci("ottimo"), traduci("htmlCopiato"), "success");
+			$('#download_image').on('click', function () {
+				if (imageCreata) imageCreata.scaricaImmagine();
 			});
-		});
 
-		function loadSocial() {
-			const nomi = $('#social_filter').val();
-			apiCall("social", { nomi: nomi }, function (response) {
-				$('#social_output').text(JSON.stringify(response, null, 2));
-			}, 'GET', false);
-		}
-
-		function loadAsset() {
-			const id = ($('#asset_id').val() || "").trim();
-			const url = infoContesto.route.getAsset + "?ID=" + encodeURIComponent(id);
-			$('#asset_preview').attr('src', url);
-			$('#asset_link').attr('href', url).text(url);
-		}
-
-		$('#call_social_api').on('click', loadSocial);
-		$('#copy_social_json').on('click', function () {
-			copyToClipboard($('#social_output').text()).then(() => {
-				Swal.fire(traduci("ottimo"), traduci("jsonCopiato"), "success");
+			$('#markdown_input').on('input', function () {
+				clearTimeout(markdownRenderTimer);
+				markdownRenderTimer = setTimeout(renderMarkdown, 300);
 			});
-		});
-		$('#load_asset').on('click', loadAsset);
+			$('#copy_markdown_preview').on('click', function () {
+				copyToClipboard($('#markdown_output').text()).then(() => {
+					Swal.fire(traduci("ottimo"), traduci("operazioneRiuscita"), "success");
+				});
+			});
+			$('#copy_markdown_html').on('click', function () {
+				copyToClipboard($('#markdown_html').val()).then(() => {
+					Swal.fire(traduci("ottimo"), traduci("htmlCopiato"), "success");
+				});
+			});
 
-		buildImage();
-		renderMarkdown();
-		loadSocial();
-		loadAsset();
-	});
+			function loadSocial() {
+				const nomi = $('#social_filter').val();
+				apiCall("social", { nomi: nomi }, function (response) {
+					$('#social_output').text(JSON.stringify(response, null, 2));
+				}, 'GET', false);
+			}
+
+			function loadAsset() {
+				const id = ($('#asset_id').val() || "").trim();
+				const url = infoContesto.route.getAsset + "?ID=" + encodeURIComponent(id);
+				$('#asset_preview').attr('src', url);
+				$('#asset_link').attr('href', url).text(url);
+			}
+
+			$('#call_social_api').on('click', loadSocial);
+			$('#copy_social_json').on('click', function () {
+				copyToClipboard($('#social_output').text()).then(() => {
+					Swal.fire(traduci("ottimo"), traduci("jsonCopiato"), "success");
+				});
+			});
+			$('#load_asset').on('click', loadAsset);
+
+			buildImage();
+			renderMarkdown();
+			loadSocial();
+			loadAsset();
+		});
 	}); // window.addEventListener('load')
 </script>
 
