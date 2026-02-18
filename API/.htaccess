@@ -1,5 +1,17 @@
-Require all granted
-
 RewriteEngine On
+
+# Blocca accesso diretto ai file di configurazione nella cartella API
+<FilesMatch "\.(txt|json)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# URL rewriting: /API/endpoint -> /API/endpoint.php
 RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^\.]+)$ $1.php [NC,L]

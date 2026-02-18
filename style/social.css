@@ -259,8 +259,6 @@ a:has(.social-icon) {
 }
 
 
-/* fix trattini link */
-
 a:has(> .social-icon)::before,
 a:has(> .social-icon)::after {
 

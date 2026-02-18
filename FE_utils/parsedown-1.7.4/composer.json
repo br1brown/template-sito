@@ -1,7 +1,6 @@
 {
     "name": "erusev/parsedown",
     "description": "Parser for Markdown.",
-    "keywords": ["markdown", "parser"],
     "homepage": "http://parsedown.org",
     "type": "library",
     "license": "MIT",
@@ -20,7 +19,9 @@
         "phpunit/phpunit": "^4.8.35"
     },
     "autoload": {
-        "psr-0": {"Parsedown": ""}
+        "psr-0": {
+            "Parsedown": ""
+        }
     },
     "autoload-dev": {
         "psr-0": {

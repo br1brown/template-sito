@@ -30,7 +30,6 @@ class Service
 
         if (isset($this->settings["description"])) {
             if (is_array($this->settings["description"]) && isset($this->settings["description"][$this->currentLang()])) {
-                // Sostituisce il valore con la traduzione trovata
                 $data["description"] = $this->settings["description"][$this->currentLang()];
             }
         }
@@ -64,7 +63,6 @@ class Service
         if (!$this->EsternaAPI)
             $escludiroutes[] = "gateway.php";
 
-
         $data['routes'] = $this->prepareAssets("func", "php", excludeFiles: $escludiroutes);
 
         return $data;
@@ -77,31 +75,22 @@ class Service
      */
     public function getMeta(): MetaDTO
     {
-        $meta = $this->settings['meta'];
-        $metaDTO = new MetaDTO($meta);
+        $metaDTO = new MetaDTO($this->settings['meta'] ?? []);
 
-        // Impostazione dei link esterni
+        // Dipendenze CDN — caricate su ogni pagina tramite preload hint + tag effettivo
         $metaDTO->linkRel = [
-            //ROBE PER IL MENU + SOCIAL
-            new RelLink('css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css'),
-            new RelLink('css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'),
-            //jquery vari
-            new RelLink('js', 'https://code.jquery.com/jquery-3.5.1.js'),
-            new RelLink('js', 'https://code.jquery.com/ui/1.12.1/jquery-ui.js'),
-            //bootstrap
-            new RelLink('js', 'https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'),
-            new RelLink('css', 'https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css'),
-            //GLI ALERT
-            new RelLink('js', 'https://cdn.jsdelivr.net/npm/sweetalert2@10'),
-            //include a polyfill for ES6 Promises for IE11
-            new RelLink('js', 'https://cdn.jsdelivr.net/npm/promise-polyfill'),
+            new RelLink('css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'),
+            // jQuery mantenuto per compatibilità con il codebase JS esistente
+            new RelLink('js', 'https://code.jquery.com/jquery-3.7.1.min.js'),
+            // Bootstrap bundle: include già Popper.js, non richiede dipendenze aggiuntive
+            new RelLink('css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css'),
+            new RelLink('js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'),
+            new RelLink('js', 'https://cdn.jsdelivr.net/npm/sweetalert2@11'),
         ];
 
         $havesmoke = isset($this->settings['smoke']) && $this->settings['smoke']["enable"];
 
         $excludeJs = $havesmoke ? [] : ["jquery_bloodforge_smoke_effect.js"];
-
-        // Preparazione e impostazione dei CSS e JS locali
 
         foreach ($this->prepareAssets("style", "css", ["base.css"], ["addon.css"]) as $css) {
             $metaDTO->linkRel[] = new RelLink("css", $this->baseURL("style/" . $css));
@@ -120,15 +109,14 @@ class Service
     }
 
     /**
-     * @var Traduzione Correnete della pagina
+     * @var Traduzione Corrente della pagina
      */
     public Traduzione $_traduzione;
 
     /**
-     * @var string URL dellendpoint con le traduzioni
+     * @var string URL dell'endpoint con le traduzioni
      */
     public string $pathLang;
-
 
     /**
      * @var string URL dell'API di servizio
@@ -143,7 +131,7 @@ class Service
     /**
      * @var string Chiave dell'API di servizio
      */
-    public string $APIkey;
+    public string $APIKey;
 
     /**
      * @var string URL dell'Host
@@ -151,32 +139,66 @@ class Service
     public string $baseUrl;
 
     /**
+     * @var bool La connessione è HTTPS?
+     */
+    private bool $_isSecure = false;
+
+    /**
+     * Avvia la sessione PHP in modo lazy: solo quando serve davvero.
+     *
+     * PERCHÉ NON NEL COSTRUTTORE:
+     * session_start() forza PHP a emettere "Cache-Control: no-store" su TUTTE
+     * le pagine, anche quelle pubbliche. Questo blocca la back-forward cache
+     * del browser (BFCache), rendendo ogni navigazione avanti/indietro un
+     * reload completo. Chiamandola solo quando $requiresAuth = true in TopPage,
+     * le pagine pubbliche rimangono cacheable e l'utente percepisce navigazione istantanea.
+     *
+     * PERCHÉ IL CONTROLLO session_status():
+     * Se due metodi (es. isLoggedIn + getToken) vengono chiamati nella stessa
+     * request, il secondo session_start() causerebbe un warning PHP.
+     * Il controllo rende la funzione idempotente: chiamala quante volte vuoi,
+     * la sessione parte una sola volta.
+     */
+    private function avviaSessione(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start([
+                'cookie_httponly' => true,   // Il cookie non è accessibile da JavaScript (protezione XSS)
+                'cookie_secure'   => $this->_isSecure, // Cookie solo su HTTPS se il sito è HTTPS
+                'cookie_samesite' => 'Lax',  // Protezione CSRF: cookie non inviato su richieste cross-site
+            ]);
+        }
+    }
+
+    /**
      * Costruttore della classe Service.
      * Legge le impostazioni dal file JSON e inizializza l'URL dell'API.
      */
     public function __construct()
     {
-        session_start();
-
-        // Controllo prima la variabile $_SERVER['HTTPS']
-        $protocol = 'http'; // Impostazione predefinita a 'http'
+        // Controllo protocollo: verifica HTTPS diretto o tramite proxy
+        $protocol = 'http';
         if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
-            $protocol = 'https'; // Se 'HTTPS' è attivo, usa 'https'
+            $protocol = 'https';
         } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
-            $protocol = 'https'; // Se 'HTTP_X_FORWARDED_PROTO' è 'https', usa 'https'
+            $protocol = 'https';
         }
 
-        // Costruzione dell'URL
+        $this->_isSecure = ($protocol === 'https');
+
+        // Costruzione dell'URL base
         $this->baseUrl = $protocol . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF']) . "/";
 
-        $this->settings = json_decode(file_get_contents('websettings.json'), true);
+        // Caricamento impostazioni dal file JSON (percorso assoluto per compatibilità hosting)
+        $settingsPath = dirname($_SERVER['DOCUMENT_ROOT'] . $_SERVER['PHP_SELF']) . '/websettings.json';
+        $this->settings = json_decode(file_get_contents($settingsPath), true);
 
         $this->caricaLingua();
 
-        $this->APIkey = $this->settings['API']['key'];
+        $this->APIKey = $this->settings['API']['key'];
 
         $APIEndPoint = $this->settings['API']['EndPoint'];
-        $this->EsternaAPI = strpos($APIEndPoint, "http://") === 0 || strpos($APIEndPoint, "https://") === 0;
+        $this->EsternaAPI = str_starts_with($APIEndPoint, "http://") || str_starts_with($APIEndPoint, "https://");
         if ($this->EsternaAPI) {
             $this->urlAPI = $APIEndPoint;
         } else {
@@ -187,7 +209,7 @@ class Service
     /**
      * Carica le traduzioni per la lingua impostata se il file esiste.
      */
-    private function caricaLingua()
+    private function caricaLingua(): void
     {
         $lang = strtolower($this->settings['lang']);
         if (isset($_GET["lang"]) && !empty($_GET["lang"]))
@@ -209,10 +231,17 @@ class Service
         return array_unique(array_merge($lingue, Traduzione::listaLingue(__DIR__ . "/lang")));
     }
 
-
     /**
-     * @param string $sz L'identificatore della stringa da tradurre
-     * @return string La stringa tradotta
+     * Restituisce la stringa tradotta nella lingua corrente.
+     * È il metodo più usato nelle pagine: ogni testo visibile all'utente
+     * dovrebbe passare da qui per supportare il multilingua.
+     *
+     * @param string $sz L'identificatore della stringa da tradurre (chiave nel file lang JSON).
+     * @param mixed  ...$parametri Valori opzionali da sostituire nei placeholder della stringa.
+     * @return string La stringa tradotta.
+     *
+     * @example echo $service->traduci("titoloPagina");
+     * @example echo $service->traduci("benvenuto", $nomeUtente); // se la stringa ha un placeholder
      */
     public function traduci(string $sz, ...$parametri): string
     {
@@ -226,20 +255,19 @@ class Service
     {
         return $this->_traduzione->lang;
     }
+
     /**
-     * Prepara e ordina gli asset (CSS o JS) per il caricamento, basandosi su file specifici da caricare per primi e per ultimi,
-     * e includendo file addizionali dalla directory specificata, escludendo quelli non necessari.
+     * Prepara e ordina gli asset per il caricamento.
      *
-     * @param string $directory Il percorso della directory da esplorare per file addizionali.
-     * @param string $extension L'estensione dei file (ad esempio, 'css' o 'js').
-     * @param array $firstLoad Array di file da caricare per primi.
-     * @param array $lastLoad Array di file da caricare per ultimi.
-     * @param array $excludeFiles Array di file da escludere dall'elenco addizionale.
+     * @param string $directory Il percorso della directory da esplorare.
+     * @param string $extension L'estensione dei file.
+     * @param array $firstLoad File da caricare per primi.
+     * @param array $lastLoad File da caricare per ultimi.
+     * @param array $excludeFiles File da escludere.
      * @return array Array ordinato di percorsi di file da caricare.
      */
     private function prepareAssets(string $directory, string $extension, array $firstLoad = [], array $lastLoad = [], array $excludeFiles = []): array
     {
-        // Ottiene un elenco di file dalla directory specificata, escludendo i file non necessari
         $getFileList = function ($directory, $extension, $excludeFiles) {
             $fileList = array();
             $absolutePath = realpath($directory) . '/';
@@ -253,7 +281,6 @@ class Service
             return $fileList;
         };
 
-        // Combina i file da caricare per primi, file addizionali e file da caricare per ultimi
         $allFiles = array_merge($firstLoad, $excludeFiles, $lastLoad);
         $additionalFiles = $getFileList($directory, $extension, $allFiles);
         return array_merge($firstLoad, $additionalFiles, $lastLoad);
@@ -267,7 +294,7 @@ class Service
      */
     public function APIbaseURL(string $path): string
     {
-        if (strpos($path, "http://") === 0 || strpos($path, "https://") === 0) {
+        if (str_starts_with($path, "http://") || str_starts_with($path, "https://")) {
             return $path;
         } else {
             return rtrim($this->urlAPI, '/') . '/' . $path;
@@ -282,7 +309,7 @@ class Service
      */
     public function baseURL(string $path): string
     {
-        if (strpos($path, "http://") === 0 || strpos($path, "https://") === 0) {
+        if (str_starts_with($path, "http://") || str_starts_with($path, "https://")) {
             return $path;
         } else {
             return rtrim($this->baseUrl, '/') . '/' . $path;
@@ -297,12 +324,12 @@ class Service
      */
     public function createRoute(string $route): string
     {
+        // Parsa l'URL corrente e quello richiesto
         $current = parse_url($_SERVER['REQUEST_URI']);
         $completo = $this->baseUrl($route);
-        // Parsa l'URL e decomponilo nei suoi componenti
         $parsedUrl = parse_url($completo);
 
-        // Definizione della closure per "whitchPage"
+        // Closure per determinare la pagina da un path
         $whitchPage = function (string $path): string {
             return empty($path) || str_ends_with($path, '/') ? $path . "index" : $path;
         };
@@ -310,9 +337,9 @@ class Service
         $RequestPage = $whitchPage($parsedUrl['path']);
         $RenderPage = $whitchPage($current['path']);
 
-        // Verifica se la lingua è quella di default
+        // Se la lingua è quella di default, restituisci l'URL senza parametro lang
         if ($this->settings['lang'] == $this->_traduzione->lang) {
-            // Se l'URL da generare è lo stesso della pagina corrente, restituisci solo il frammento
+            // Se siamo sulla stessa pagina, restituisci solo il frammento
             if ($RenderPage === $RequestPage) {
                 if (isset($parsedUrl['fragment'])) {
                     return '#' . $parsedUrl['fragment'];
@@ -321,19 +348,15 @@ class Service
             return $completo;
         }
 
-        // Prepara l'array dei parametri della query
+        // Prepara i parametri della query e aggiungi/modifica il parametro della lingua
         $queryParams = [];
         if (isset($parsedUrl['query'])) {
             parse_str($parsedUrl['query'], $queryParams);
         }
 
-        // Aggiungi o modifica il parametro della lingua
         $queryParams['lang'] = $this->_traduzione->lang;
-
-        // Ricostruisci la query string
         $queryString = http_build_query($queryParams);
-
-        // Ricostruisci l'URL
+        // Ricostruisci l'URL con la nuova query string
         $newUrl = $parsedUrl['path'] . '?' . $queryString;
 
         // Aggiungi il frammento, se presente
@@ -349,10 +372,10 @@ class Service
     }
 
     /**
-     * Restituisce il percorso completo dell'URL per una risorsa.
+     * Restituisce il percorso completo dell'URL per un asset.
      * 
-     * @param string $path Percorso della risorsa.
-     * @return string URL completo della risorsa.
+     * @param string $ID Identificativo dell'asset.
+     * @return string URL completo dell'asset.
      */
     public function UrlAsset(string $ID): string
     {
@@ -360,17 +383,24 @@ class Service
     }
 
     /**
-     * Esegue una chiamata all'endpoint dell'API utilizzando il metodo HTTP specificato e restituisce la risposta.
-     * 
-     * @param string $pathOrEndpoint Il percorso dell'endpoint o interno dell'API.
-     * @param string $metodo Il metodo HTTP da utilizzare per la chiamata (ad es. 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'). Di default è 'GET'.
-     * @param array $dati I dati da inviare con la richiesta, utili per i metodi come 'POST', 'PUT'.
-     * @param string $contentType Il Content Type della richiesta.
-     * @return array Risposta dell'API decodificata in formato array.
-     * @throws InvalidArgumentException Se i parametri obbligatori non sono validi.
-     * @throws Exception In caso di errore nella chiamata all'endpoint o nella risposta dell'API.
+     * Esegue una chiamata all'endpoint dell'API e restituisce la risposta decodificata.
+     * È il metodo principale per recuperare dati dal backend nelle pagine del sito.
+     * Gestisce automaticamente JSON, XML e testo semplice in base al Content-Type della risposta.
+     * Il parametro 'lang' viene aggiunto automaticamente a ogni chiamata.
+     *
+     * @param string      $pathOrEndpoint Il percorso dell'endpoint (es. "anagrafica", "social")
+     *                                    o URL completo per API esterne.
+     * @param string      $metodo         Il metodo HTTP ('GET', 'POST', ecc.). Default 'GET'.
+     * @param array       $dati           I dati da inviare nel body (POST) o query string (GET).
+     * @param string|null $contentType    Content-Type della richiesta. Se null, viene dedotto dal metodo.
+     * @return mixed Risposta decodificata (array per JSON, SimpleXMLElement per XML, string altrimenti).
+     * @throws InvalidArgumentException Se $pathOrEndpoint è vuoto.
+     * @throws Exception In caso di errore di rete o parsing della risposta.
+     *
+     * @example $dati = $service->callApiEndpoint("anagrafica");           // GET
+     * @example $service->callApiEndpoint("logging", "POST", ["pwd"=>$p]); // POST form
      */
-    public function callApiEndpoint(string $pathOrEndpoint, string $metodo = "GET", array $dati = [], ?string $contentType = null)
+    public function callApiEndpoint(string $pathOrEndpoint, string $metodo = "GET", array $dati = [], ?string $contentType = null): mixed
     {
         // Validazione del parametro $pathOrEndpoint
         if (empty($pathOrEndpoint)) {
@@ -386,7 +416,7 @@ class Service
 
         $dati['lang'] = $this->_traduzione->lang;
 
-        $risultati = ServerToServer::callURL($url, $metodo, $dati, $contentType, ["X-Api-Key: " . $this->APIkey]);
+        $risultati = ServerToServer::callURL($url, $metodo, $dati, $contentType, ["X-Api-Key: " . $this->APIKey]);
         $response = $risultati->Response;
         $ResponseContentType = $risultati->ResponseContentType;
 
@@ -395,17 +425,17 @@ class Service
         $processAs = in_array($ResponseContentType, $managedContentTypes) ? $ResponseContentType : $contentType;
 
         switch ($processAs) {
+            // Gestione della risposta JSON
             case 'application/json':
-                // Gestione della risposta JSON
                 $oggetto = json_decode($response, true);
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new Exception("Errore nella decodifica JSON: " . json_last_error_msg());
                 }
                 break;
 
+            // Gestione della risposta XML
             case 'text/xml':
             case 'application/xml':
-                // Gestione della risposta XML
                 libxml_use_internal_errors(true);
                 $oggetto = simplexml_load_string($response);
                 if ($oggetto === false) {
@@ -415,26 +445,20 @@ class Service
                 }
                 break;
 
+            // Gestione di altri tipi di contenuto (testo semplice, HTML, ecc.)
             default:
-                // Gestione di altri tipi di contenuto (come testo semplice o HTML)
                 $oggetto = $response;
                 break;
         }
+
         // Restituisci l'oggetto decodificato o la risposta grezza
         return $oggetto;
-
     }
-
 
     /**
      * Converte una stringa in entità HTML.
      *
-     * Questa funzione prende una stringa come input e la converte
-     * in entità HTML, utilizzando il valore ASCII di ogni carattere
-     * della stringa per formare l'entità. Questo è utile per
-     * visualizzare i caratteri speciali in HTML.
-     *
-     * @param string $stringa La stringa da convertire in entità HTML.
+     * @param string $stringa La stringa da convertire.
      * @return string La stringa convertita in entità HTML.
      */
     public function convertiInEntitaHTML(string $stringa): string
@@ -446,17 +470,25 @@ class Service
         }
         return $risultato;
     }
+
     /**
-     * Crea un link HTML con opzioni di personalizzazione.
+     * Genera un link HTML localizzato con gestione automatica della pagina corrente.
+     * Se la route corrisponde alla pagina attiva, restituisce solo il testo (senza <a>),
+     * evitando link "a se stessi" (buona pratica accessibilità e SEO).
+     * Per URL esterni aggiunge automaticamente target="_blank" e rel="noopener noreferrer".
+     * Usare per tutti i link di navigazione interna (menu, breadcrumb, CTA).
      *
-     * @param string $keyTranslate La chiave per la traduzione del testo del link.
-     * @param string $route Il percorso o URL del link.
-     * @param string $cls (Opzionale) La classe CSS da aggiungere al link.
-     * @param bool $labelStrong (Opzionale) Se true, usa il tag <strong> per il testo del link; altrimenti usa <a>.
-     * @param string $ariaLabel (Opzionale) L'attributo aria-label per il link per migliorare l'accessibilità.
-     * @return string Il codice HTML del link.
+     * @param string $keyTranslate Chiave di traduzione per il testo del link.
+     * @param string $route        Nome della pagina (es. "index", "social") o URL esterno.
+     * @param string $cls          Classi CSS aggiuntive (es. "nav-link", "btn btn-primary").
+     * @param bool   $labelStrong  true → testo in <strong> se pagina corrente. Default true.
+     * @param string $ariaLabel    aria-label personalizzato. Se vuoto, usa "Link {testo}".
+     * @return string Markup HTML del link o del testo (se pagina corrente).
+     *
+     * @example echo $service->createRouteLinkHTML("home", "index", "nav-link");
+     * @example echo $service->createRouteLinkHTML("contatti", "social", "btn btn-primary");
      */
-    public function CreateRouteLinkHTML(string $keyTranslate, string $route, string $cls = "", bool $labelStrong = true, string $ariaLabel = ""): string
+    public function createRouteLinkHTML(string $keyTranslate, string $route, string $cls = "", bool $labelStrong = true, string $ariaLabel = ""): string
     {
         $tagLabel = $labelStrong === true ? "strong" : "a";
         $label = $this->traduci($keyTranslate);
@@ -469,10 +501,9 @@ class Service
             $parsedUrl = parse_url($route);
             $target = "";
             if (isset($parsedUrl['scheme'])) {
-                $target = ' target="_blank"';
+                $target = ' target="_blank" rel="noopener noreferrer"';
             }
 
-            // Aggiungi attributi ARIA se forniti
             $aria = ' aria-label="' . htmlspecialchars(!empty($ariaLabel) ? $ariaLabel : 'Link ' . $label) . '"';
 
             return "<a" . $class . $target . $aria . " href=\"" . htmlspecialchars($this->createRoute($route)) . "\">" . htmlspecialchars($label) . "</a>";
@@ -480,17 +511,17 @@ class Service
     }
 
     /**
-     * Crea un link HTML con l'URL codificato e attributi personalizzabili.
+     * Genera un link con email/telefono offuscati per proteggerli dagli scraper.
+     * L'URL viene convertito in entità HTML numeriche e decodificato lato client via JS.
+     * Usare per ogni indirizzo email o numero di telefono mostrato in pagina.
      *
-     * Questa funzione genera un link HTML che, quando cliccato, attiva una funzione JavaScript
-     * 'openEncodedLink' con un prefisso e un URL codificato come parametri.
-     * Gli attributi aggiuntivi come class, target, title, rel, id, style, data-* e aria-*
-     * possono essere inclusi per personalizzare ulteriormente il link.
+     * @param string $url            L'indirizzo da proteggere (email, telefono, URL).
+     * @param string $prefisso       Prefisso del protocollo (es: 'mailto:', 'tel:').
+     * @param array  $attributiExtra Attributi HTML aggiuntivi (es. ['class' => 'btn']).
+     * @return string Markup HTML del link con href="#" e onclick offuscato.
      *
-     * @param string $url L'URL da includere nel link.
-     * @param string $prefisso Il prefisso da utilizzare (es: 'mailto:', 'tel:'). Se non specificato, non viene usato alcun prefisso.
-     * @param array $attributiExtra Un array associativo di attributi HTML aggiuntivi e i loro valori. Esempio: ['class' => 'my-class', 'id' => 'my-id'].
-     * @return string Il codice HTML del link generato.
+     * @example echo $service->creaLinkCodificato("info@esempio.it", "mailto:");
+     * @example echo $service->creaLinkCodificato("+39012345678", "tel:");
      */
     function creaLinkCodificato(string $url, string $prefisso = '', array $attributiExtra = []): string
     {
@@ -506,35 +537,32 @@ class Service
             }
         }
 
-        // Se aria-label non è presente, aggiungilo
+        // Se aria-label non è presente, aggiungilo automaticamente
         if (!$ariaLabelPresente) {
             $attributi .= 'aria-label="Link ' . htmlspecialchars($url) . '" ';
         }
 
+        // Aggiungi gli attributi extra forniti
         foreach ($attributiExtra as $chiave => $valore) {
             $attributi .= $chiave . '="' . htmlspecialchars($valore) . '" ';
         }
 
-        return "<a href=\"#\" onClick=\"openEncodedLink('$prefisso', '$urlCodificato')\" $attributi>$urlCodificato</a>";
+        $prefissoSafe = htmlspecialchars($prefisso, ENT_QUOTES, 'UTF-8');
+        $urlCodificatoSafe = htmlspecialchars($urlCodificato, ENT_QUOTES, 'UTF-8');
+        return "<a href=\"#\" onClick=\"openEncodedLink('$prefissoSafe', '$urlCodificatoSafe')\" $attributi>$urlCodificato</a>";
     }
 
     /**
-     * Verifica le credenziali dell'utente e gestisce l'autenticazione.
+     * Autentica l'utente e salva il token Bearer in sessione se valido.
+     * Non chiamare direttamente dalle pagine: usare la funzione wrapper loggati()
+     * definita in funzioni.php, che è il punto di personalizzazione previsto dal template.
      *
-     * Questa funzione viene utilizzata per autenticare un utente attraverso 
-     * Se la i dati sono validi è valida, imposta lo stato di autenticazione nella 
-     * sessione e salva il token Bearer. In caso contrario, restituisce un 
-     * errore per gestire una risposta adeguata.
-     *
-     * @param string $dati Gli eventuali dati per l'autenticazioni.
-     * 
-     * @return array Ritorna un array con i seguenti dati:
-     *               - valid (bool): Indica se l'autenticazione ha avuto successo.
-     *               - token (string|null): Il token Bearer se l'autenticazione è valida.
-     *               - error (string|null): Il messaggio di errore in caso di autenticazione fallita.
+     * @param array $_dati Dati per l'autenticazione (tipicamente ['pwd' => $password]).
+     * @return array Risultato con chiavi: 'valid' (bool), 'token' (string|null), 'error' (string|null).
      */
-    function loggati($_dati): array
+    function loggati(array $_dati): array
     {
+        $this->avviaSessione();
         $itok = $this->callApiEndpoint("logging", "POST", $_dati, "application/x-www-form-urlencoded");
         if ($itok["valid"] == true) {
             $_SESSION['logged_in'] = true;
@@ -546,101 +574,71 @@ class Service
 
     /**
      * Restituisce il token di login
-     * @return string la stringa
+     * @return string il token
      */
     public function getToken(): string
     {
-        return $_SESSION['Bearertoken'];
+        $this->avviaSessione();
+        return $_SESSION['Bearertoken'] ?? '';
     }
 
     /**
-     * @var bool è loggato?
+     * @return bool è loggato?
      */
     public function isLoggedIn(): bool
     {
+        $this->avviaSessione();
         return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && isset($_SESSION['Bearertoken']);
     }
 
     /**
-     * Determina se è preferibile il testo di colore scuro o chiaro basato sulla luminosità del colore di sfondo.
+     * Determina se è preferibile il testo scuro basato sulla luminosità del colore di sfondo.
      *
-     * Questa funzione calcola la luminosità di un colore dato in formato HEX e restituisce un valore booleano.
-     * Restituisce 'true' se un testo scuro (nero) è preferibile per garantire una buona leggibilità sullo sfondo,
-     * altrimenti 'false' per un testo chiaro (bianco). Utilizza una formula di luminosità relativa che
-     * tiene conto della diversa sensibilità dell'occhio umano ai colori rosso, verde e blu.
-     *
-     * @param string $hexColor Il colore di sfondo in formato HEX, come una stringa (es. '#ffcc00').
-     * @return bool Restituisce 'true' se il testo scuro è preferibile, altrimenti 'false'.
+     * @param string $hexColor Il colore di sfondo in formato HEX.
+     * @return bool True se il testo scuro è preferibile.
      */
     function isDarkTextPreferred(string $hexColor): bool
     {
-        // Rimuove il carattere # se presente
         $hex = ltrim($hexColor, '#');
-
         // Converte HEX in RGB
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));
         $b = hexdec(substr($hex, 4, 2));
-
-        // Calcola la luminosità
+        // Calcola la luminosità percepita (formula W3C)
         $luminance = (0.2126 * $r + 0.7152 * $g + 0.0722 * $b) / 255;
-
-        // Restituisce true per il testo scuro se la luminosità è superiore a 0.5, altrimenti false per il testo chiaro
+        // Restituisce true per testo scuro se luminosità > 0.5
         return $luminance > 0.5;
     }
 
     /**
-     * Scurisce un colore HEX dato di un fattore specificato.
+     * Scurisce un colore HEX.
      *
-     * Questa funzione converte il colore HEX in formato RGB, applica un fattore di scurimento ai valori RGB,
-     * e poi converte i valori RGB scuriti di nuovo in formato HEX. È utile per creare varianti di colore più scure.
-     *
-     * @param string $hexColor Il colore originale in formato HEX (es. '#ffcc00').
-     * @param float $darkenFactor Il fattore di scurimento, dove 1.0 lascia il colore invariato e 0.0 lo rende nero. Default a 0.2.
+     * @param string $hexColor Il colore originale in formato HEX.
+     * @param float $darkenFactor Il fattore di scurimento (0.0 = nero, 1.0 = invariato). Default 0.2.
      * @return string Il colore HEX scurito.
      */
     function darkenColor(string $hexColor, float $darkenFactor = 0.2): string
     {
-        // Converti HEX in RGB
         $hex = ltrim($hexColor, '#');
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        // Applica il fattore di scurimento
-        $r = max(0, $r - $r * $darkenFactor);
-        $g = max(0, $g - $g * $darkenFactor);
-        $b = max(0, $b - $b * $darkenFactor);
-
-        // Converti di nuovo in HEX e restituisci
+        $r = max(0, hexdec(substr($hex, 0, 2)) * (1 - $darkenFactor));
+        $g = max(0, hexdec(substr($hex, 2, 2)) * (1 - $darkenFactor));
+        $b = max(0, hexdec(substr($hex, 4, 2)) * (1 - $darkenFactor));
         return sprintf("#%02x%02x%02x", $r, $g, $b);
     }
 
     /**
-     * Schiarisce un colore HEX dato di un fattore specificato.
+     * Schiarisce un colore HEX.
      *
-     * Questa funzione converte il colore HEX in formato RGB, applica un fattore di schiarimento ai valori RGB,
-     * e poi converte i valori RGB schiariti di nuovo in formato HEX. È utile per creare varianti di colore più chiare.
-     *
-     * @param string $hexColor Il colore originale in formato HEX (es. '#ffcc00').
-     * @param float $lightenFactor Il fattore di schiarimento, dove 1.0 lascia il colore invariato e 2.0 lo rende il più chiaro possibile. Default a 1.2.
+     * @param string $hexColor Il colore originale in formato HEX.
+     * @param float $lightenFactor Il fattore di schiarimento. Default 1.2.
      * @return string Il colore HEX schiarito.
      */
     function lightenColor(string $hexColor, float $lightenFactor = 1.2): string
     {
-        // Converti HEX in RGB
         $hex = ltrim($hexColor, '#');
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        // Applica il fattore di schiarimento
-        $r = min(255, $r * $lightenFactor);
-        $g = min(255, $g * $lightenFactor);
-        $b = min(255, $b * $lightenFactor);
-
-        // Converti di nuovo in HEX e restituisci
+        $r = min(255, hexdec(substr($hex, 0, 2)) * $lightenFactor);
+        $g = min(255, hexdec(substr($hex, 2, 2)) * $lightenFactor);
+        $b = min(255, hexdec(substr($hex, 4, 2)) * $lightenFactor);
         return sprintf("#%02x%02x%02x", $r, $g, $b);
     }
-
 }

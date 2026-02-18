@@ -1,6 +1,7 @@
 <?php
-$code = $_SERVER['REDIRECT_STATUS'];
+$code = $_SERVER['REDIRECT_STATUS'] ?? http_response_code() ?: 500;
 $forceMenu = false;
+$footer = false;
 $title = "Error " . $code;
 include('FE_utils/TopPage.php');
 
@@ -20,7 +21,8 @@ else {
 
 }
 
-$source_url = 'http' . ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+// Ricostruzione URL corrente — riusa la logica di protocollo già presente in Service
+$source_url = $service->baseUrl . ltrim($_SERVER['REQUEST_URI'], '/');
 
 ?>
 <div class="container-fluid">
@@ -41,13 +43,6 @@ $source_url = 'http' . ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off'
         </div>
     </div>
 </div>
-</body>
-<script>
-    inizializzazioneApp.then(() => {
-
-
-    });
-
-</script>
+<?php include('FE_utils/BottomPage.php'); ?>
 
 </html>

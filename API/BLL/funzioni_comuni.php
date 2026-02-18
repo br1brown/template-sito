@@ -1,31 +1,48 @@
 <?php
+
 /**
- * Ottiene un oggetto e lo restituisce, eventualmente dopo aver applicato una callback.
- * 
- * @param string $nome Nome dell'oggetto da ottenere.
- * @param callable|null $callback Funzione di callback da applicare ai dati.
+ * Funzioni comuni a tutte le API.
+ *
+ * Questo file viene incluso dagli endpoint API per operazioni condivise
+ * come la lettura di dati JSON con supporto traduzione.
+ */
+
+/**
+ * Ottiene un oggetto JSON dalla directory data/ e lo restituisce,
+ * eventualmente dopo aver applicato una callback (tipicamente per traduzione).
+ *
+ * Pattern d'uso negli endpoint:
+ *   echo echoGetObj("nomeFile", function($data, $lingua) { ... });
+ *
+ * Se la callback è presente, i dati vengono decodificati come array,
+ * passati alla callback insieme alla lingua corrente, e ri-codificati in JSON.
+ * Se la callback non c'è, il JSON viene restituito così com'è dal file.
+ *
+ * @param string $nome Nome dell'oggetto (corrisponde a data/{nome}.json).
+ * @param callable|null $callback Funzione di callback($data, $lingua) da applicare ai dati.
  * @return string Risposta JSON con i dati ottenuti o un messaggio di errore.
  */
-function Echo_getObj($nome, $callback = null)
+function echoGetObj($nome, $callback = null)
 {
-    // Controlla se la callback fornita è eseguibile
     $ciLavoro = is_callable($callback);
 
     try {
-        // Richiede i dati all'oggetto Repository
+        // Se c'è una callback, decodifica il JSON in array PHP ($ciLavoro=true);
+        // altrimenti restituisce il contenuto raw del file
         $jsonData = BLL\Repository::getObj($nome, $ciLavoro);
 
-        // Se esiste una callback valida, la applica ai dati ottenuti
         if ($ciLavoro) {
-            $l = isset($_GET["lang"]) ? filter_input(INPUT_GET, "lang", FILTER_SANITIZE_STRING) : BLL\Repository::getDefaultLang();
+            // Sanitizza il parametro lingua (sostituzione di FILTER_SANITIZE_STRING, deprecato in PHP 8.1)
+            $langRaw = $_GET["lang"] ?? BLL\Repository::getDefaultLang();
+            $l = htmlspecialchars(strip_tags($langRaw), ENT_QUOTES, 'UTF-8');
+
+            // Applica la callback (es. traduzione) e ri-codifica in JSON
             $jsonData = json_encode($callback($jsonData, $l));
         }
 
     } catch (Exception $e) {
-        // In caso di eccezione, restituisce un messaggio di errore
         return BLL\Response::retError($e->getMessage());
     }
 
-    // Restituisce i dati in formato JSON
     return $jsonData;
 }

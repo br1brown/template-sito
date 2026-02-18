@@ -4,26 +4,43 @@ namespace BLL;
 require_once 'APIException.php';
 class Repository
 {
+    /**
+     * Cache statica per il percorso API, calcolato una sola volta.
+     */
+    private static ?string $cachedAPIPath = null;
 
     /**
      * Trova il percorso della directory 'API' partendo dalla directory corrente o da una specificata.
+     * Il risultato viene cachato per evitare ricerche ricorsive ripetute.
      * 
      * @param string $dir Percorso della directory da cui iniziare la ricerca.
      * @return string|null Percorso della directory 'API' se trovata, altrimenti null.
      */
     public static function findAPIPath(string $dir = __DIR__): ?string
     {
+        // Restituisci dalla cache se già calcolato
+        if (self::$cachedAPIPath !== null) {
+            return self::$cachedAPIPath;
+        }
+
+        $result = self::searchAPIPath($dir);
+        self::$cachedAPIPath = $result;
+        return $result;
+    }
+
+    /**
+     * Ricerca ricorsiva effettiva del percorso API.
+     */
+    private static function searchAPIPath(string $dir): ?string
+    {
         $path = $dir . '/API/';
 
-        // Controlla se il percorso esiste e in caso affermativo lo restituisce.
         if (file_exists($path)) {
             return $path;
         } elseif ($dir === dirname($dir)) {
-            // Se siamo arrivati alla root senza trovare /API
             return null;
         } else {
-            // Cerca nella directory padre
-            return self::findAPIPath(dirname($dir));
+            return self::searchAPIPath(dirname($dir));
         }
     }
 
@@ -31,8 +48,8 @@ class Repository
      * Ottiene il nome del file JSON partendo da un nome base.
      * 
      * @param string $nome Nome base per il file.
-     * @param string $ext estensione per il file, sempre .
-     * @return string Percorso completo del file json.
+     * @param string $ext estensione per il file.
+     * @return string Percorso completo del file.
      */
     public static function getFileName(string $nome, string $ext = "json"): string
     {
@@ -50,16 +67,18 @@ class Repository
         if (file_exists($filePath) && is_readable($filePath)) {
             return file_get_contents($filePath);
         } else {
-            throw new NotFoundException(pathinfo(($filePath), PATHINFO_FILENAME));
+            throw new NotFoundException(pathinfo($filePath, PATHINFO_FILENAME));
         }
     }
+
     /**
      * Ottiene un oggetto da un file JSON. Se 'decodeInData' è vero, decodifica il contenuto del file.
      * 
      * @param string $nome Nome base per il file.
      * @param bool $decodeInData Indica se decodificare il contenuto in un array.
      * @return mixed Oggetto o contenuto del file.
-     * @throws Exception Se il file non può essere letto o se la decodifica JSON fallisce.
+     * @throws DecodingException Se la decodifica JSON fallisce.
+     * @throws NotFoundException Se il file non può essere letto.
      */
     public static function getObj(string $nome, bool $decodeInData = true): mixed
     {
@@ -67,24 +86,23 @@ class Repository
         if ($decodeInData) {
             $jsonData = json_decode($fileContent, true);
 
-            if ($jsonData === null) {
+            if ($jsonData === null && json_last_error() !== JSON_ERROR_NONE) {
                 throw new DecodingException();
-            } else {
-                return $jsonData;
             }
+            return $jsonData;
         } else {
             return $fileContent;
         }
     }
 
     /**
-     * Ottiene un oggetto da un file JSON. Se 'decodeInData' è vero, decodifica il contenuto del file.
+     * Ottiene il contenuto di un file di testo.
      * 
-     * @param string $nome Nome base per la stringa.
-     * @return mixed contenuto del file.
-     * @throws \Exception Se il file non può essere letto o se la decodifica JSON fallisce.
+     * @param string $nome Nome base per il file.
+     * @return string Contenuto del file.
+     * @throws NotFoundException Se il file non può essere letto.
      */
-    public static function getTxt(string $nome): mixed
+    public static function getTxt(string $nome): string
     {
         $filePath = self::getFileName($nome, "txt");
         return self::getFileContent($filePath);
@@ -97,7 +115,7 @@ class Repository
      * @param mixed $jsonData Dati da scrivere.
      * @param bool $isDecodedInData Indica se i dati sono già in formato JSON.
      */
-    public static function putObj($nome, $jsonData, $isDecodedInData = true): void
+    public static function putObj(string $nome, mixed $jsonData, bool $isDecodedInData = true): void
     {
         $filename = self::getFileName($nome);
 
@@ -114,48 +132,42 @@ class Repository
     {
         return "it";
     }
-
 }
+
 class Logging
 {
-    // Metodo statico per scrivere nel file di log con parametri variabili
-    public static function log($tipo, $stringa, ...$oggetti)
+    /**
+     * Scrive nel file di log con parametri variabili.
+     * 
+     * @param string $tipo Tipo di log (usato nel nome file).
+     * @param string $stringa Messaggio di log (supporta sprintf).
+     * @param mixed ...$oggetti Parametri per sprintf.
+     */
+    public static function log(string $tipo, string $stringa, mixed ...$oggetti): void
     {
-        // Ottieni il nome del file in base al tipo di log
         $file = Repository::getFileName($tipo . '_log', 'txt');
-
-        // Crea una stringa con timestamp per il log
         $timestamp = date('Y-m-d H:i:s');
 
-        // Se ci sono oggetti da loggare, formatta
         if (!empty($oggetti)) {
-            // Usa json_encode su oggetti passati come parametri variabili
             $stringa = sprintf($stringa, ...$oggetti);
         }
 
-        // Prepara il log completo con tipo e timestamp
         $log = sprintf("[%s] %s\n", $timestamp, $stringa);
-
-        // Scrivi nel file
         file_put_contents($file, $log, FILE_APPEND);
     }
 
-    // Metodi statici specifici per tipo di log
-    public static function logError($stringa, ...$oggetti)
+    public static function logError(string $stringa, mixed ...$oggetti): void
     {
         self::log('error', $stringa, ...$oggetti);
     }
 
-    public static function logInfo($stringa, ...$oggetti)
+    public static function logInfo(string $stringa, mixed ...$oggetti): void
     {
         self::log('info', $stringa, ...$oggetti);
     }
 
-    public static function logWarning($stringa, ...$oggetti)
+    public static function logWarning(string $stringa, mixed ...$oggetti): void
     {
         self::log('warning', $stringa, ...$oggetti);
     }
-
-    // Aggiungi ulteriori metodi per altri tipi di log, come log di debug, successi, ecc.
 }
-

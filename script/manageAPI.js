@@ -4,7 +4,7 @@
  * @param {Object} parametri - L'oggetto contenente le coppie chiave-valore da convertire in stringa di query.
  * @returns {string} La stringa di query formattata, preceduta da '?' se non vuota, altrimenti una stringa vuota.
  */
-function MakeGetQueryString(parametri) {
+function makeGetQueryString(parametri) {
 	var ret = '';
 	if (!parametri || Object.keys(parametri).length === 0)
 		ret = '';
@@ -20,7 +20,7 @@ function MakeGetQueryString(parametri) {
 
 
 function getApiUrl(action, params = null) {
-	return infoContesto.route.APIEndPoint + "/" + action + MakeGetQueryString(params);
+	return infoContesto.route.APIEndPoint + "/" + action + makeGetQueryString(params);
 }
 
 /**
@@ -104,7 +104,7 @@ function handleError(xhr, status, error) {
 			// xhr.responseText non è JSON, usa il messaggio di errore generico
 		}
 	}
-	SweetAlert.fire(errorInfo, errorMessage, 'error');
+	Swal.fire(errorInfo, errorMessage, 'error');
 }
 
 /**
@@ -117,7 +117,7 @@ function handleError(xhr, status, error) {
 function genericSuccess(response, callback, modalOk = true) {
 	if (response.status === 'success') {
 		if (modalOk === true)
-			SweetAlert.fire(traduci('ottimo') + "!", (response.message), 'success').then(() => {
+			Swal.fire(traduci('ottimo') + "!", (response.message), 'success').then(() => {
 				if (typeof callback === "function") {
 					callback(response);
 				}
@@ -125,7 +125,7 @@ function genericSuccess(response, callback, modalOk = true) {
 		else
 			callback(response);
 	} else if (response.status === 'error') {
-		SweetAlert.fire(traduci('errore'), traduci(response.message), 'error');
+		Swal.fire(traduci('errore'), traduci(response.message), 'error');
 	} else {
 		if (typeof callback === "function") {
 			callback(response);

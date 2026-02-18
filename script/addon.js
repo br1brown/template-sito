@@ -9,9 +9,9 @@ inizializzazioneApp.then(() => {
         var tipo = $(this).data("type");
 
         if (tipo && tipo != "") {
-            swal.fire(val, "", tipo);
+            Swal.fire(val, "", tipo);
         } else {
-            swal.fire(val);
+            Swal.fire(val);
         }
     });
 });

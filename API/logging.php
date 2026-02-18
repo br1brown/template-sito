@@ -1,18 +1,18 @@
 <?php
 include __DIR__ . '/BLL/auth_and_cors_middleware.php';
 
-// function eseguiPOST()
-// {
+function eseguiPOST()
+{
+    header('Content-Type: application/json');
 
-//     header('Content-Type: application/json');
+    $dati = datiInput();
+    $pwd = $dati['pwd'] ?? ($_POST['pwd'] ?? null);
 
-//     // Verifica se l'input 'pwd' è presente in $_POST
-//     if (isset($_POST['pwd'])) {
-//         echo json_encode(generaToken($_POST['pwd']));
-//     } else {
-//         // Se l'input 'pwd' non è presente, restituisce un errore
-echo json_encode(['error' => 'Password non fornita']);
-//     }
-// }
+    if ($pwd !== null) {
+        echo json_encode(generaToken($pwd));
+    } else {
+        echo json_encode(['valid' => false, 'error' => 'Password non fornita']);
+    }
+}
 
 include __DIR__ . '/BLL/gestione_metodi.php';

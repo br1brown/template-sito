@@ -11,14 +11,81 @@ class RelLink
         $this->url = $url;
     }
 
+    /**
+     * Mappa il tipo della risorsa agli attributi necessari per i tag HTML.
+     * Centralizza la logica tipo→tag in un unico posto: aggiungere un nuovo
+     * tipo (es. 'font') richiede solo aggiornare questo metodo.
+     *
+     * @return array{tag: string, as: string, attrs: string}|null
+     *   'tag'   → nome del tag HTML da usare ('link' o 'script')
+     *   'as'    → valore dell'attributo "as" per i preload hint
+     *   'attrs' → attributi extra del tag di inclusione (es. 'defer', 'rel="stylesheet"')
+     *   null se il tipo non è gestito.
+     */
+    private function tipoAttrs(): ?array
+    {
+        return match ($this->type) {
+            'css' => ['tag' => 'link', 'as' => 'style', 'attrs' => 'rel="stylesheet"'],
+            'js' => ['tag' => 'script', 'as' => 'script', 'attrs' => 'defer'],
+            default => null,
+        };
+    }
+
+    /**
+     * Genera il tag HTML per includere la risorsa (<script> o <link rel="stylesheet">).
+     *
+     * Tutti gli script JS usano defer: il browser li scarica in parallelo
+     * senza bloccare il rendering, eseguendoli in ordine dichiarato dopo il DOM.
+     * La catena (jQuery → Bootstrap → lingua.js → base.js → addon.js) è preservata
+     * perché defer garantisce l'ordine. Gli script inline di pagina devono wrappare
+     * il codice in window.addEventListener('load', ...) oppure usare inizializzazioneApp.then().
+     */
     public function visualizza(): string
     {
-        if ($this->type == 'css') {
-            return '	<link rel="stylesheet" href="' . $this->url . '">' . "\n";
-        } else if ($this->type == 'js') {
-            return '	<script src="' . $this->url . '"></script>' . "\n";
+        $attrs = $this->tipoAttrs();
+        if ($attrs === null)
+            return "";
+
+        if ($attrs['tag'] === 'link') {
+            return "\t<link {$attrs['attrs']} href=\"{$this->url}\">\n";
+        } else {
+            return "\t<script src=\"{$this->url}\" {$attrs['attrs']}></script>\n";
         }
-        return "";
+    }
+
+    /**
+     * Genera un tag <link rel="preload"> per le risorse CDN esterne.
+     *
+     * I preload hints permettono al browser di iniziare a scaricare le risorse
+     * CDN in parallelo appena incontra il tag nel <head>, SENZA modificare
+     * l'ordine di esecuzione degli script. Questo migliora il First Contentful Paint
+     * perché il browser non deve aspettare di incontrare il <script> per iniziare il download.
+     *
+     * Si applica solo a risorse esterne (CDN) perché le risorse locali
+     * sono già servite dallo stesso server con latenza minima.
+     *
+     * Nota: NON si usa l'attributo crossorigin perché i tag <script> e
+     * <link rel="stylesheet"> effettivi non lo hanno. Il credentials mode
+     * del preload deve corrispondere a quello del tag che consuma la risorsa,
+     * altrimenti il browser ignora il preload e riscarica da zero.
+     *
+     * @return string Tag <link rel="preload"> o stringa vuota se la risorsa è locale.
+     */
+    public function preloadHint(): string
+    {
+        $attrs = $this->tipoAttrs();
+        if ($attrs === null)
+            return '';
+
+        // Non basta controllare http:// perché anche le risorse locali hanno URL assoluti 
+        // Si confronta l'host dell'URL con HTTP_HOST per distinguere i CDN.
+        $parsedHost = parse_url($this->url, PHP_URL_HOST);
+        $serverHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+        if ($parsedHost === null || strcasecmp($parsedHost, $serverHost) === 0) {
+            return '';
+        }
+
+        return "\t<link rel=\"preload\" href=\"{$this->url}\" as=\"{$attrs['as']}\">\n";
     }
 }
 
@@ -27,7 +94,6 @@ class MetaDTO
     public bool $MobileFriendly = true;
     public bool $FullScreenWebApp = true;
     public int $mobileOptimizationWidth = 320;
-    public array $keywords = [];
     private string $dataScadenza = '';
     public ?string $dataScadenzaGMT = null;
     /** @var RelLink[] */

@@ -3,7 +3,7 @@ include __DIR__ . '/BLL/auth_and_cors_middleware.php';
 function eseguiGET()
 {
 
-    echo Echo_getObj("social", function ($data) { // use ($variabile, $variabile2) 
+    echo echoGetObj("social", function ($data) { // use ($variabile, $variabile2) 
         $nomi = isset($_GET['nomi']) ? $_GET['nomi'] : [];
 
         if (empty($nomi))

@@ -2,25 +2,25 @@
 html {
 	position: relative;
 	min-height: 100vh;
-	/* 100% dell'altezza del viewport */
 }
 
 /* Stile di base per il corpo del documento */
 body {
 	background-color: var(--colorBase);
-	/* Colore di sfondo */
 	font-family: Geneva, Verdana, sans-serif;
-	/* Imposta il tipo di carattere */
 }
 
-a,
-a:visited,
-a:active,
-a:focus {
+/* :not(.btn) esclude i link usati come bottoni (<a class="btn btn-primary">).
+   Senza questa esclusione, il colore del tema sovrascriveva il testo del bottone
+   rendendolo invisibile sullo sfondo scuro del bottone stesso (bug accessibilità). */
+a:not(.btn),
+a:not(.btn):visited,
+a:not(.btn):active,
+a:not(.btn):focus {
 	color: var(--colorLink);
 }
 
-a:hover {
+a:not(.btn):hover {
 	color: var(--colorLink);
 }
 
@@ -38,10 +38,10 @@ a:hover {
 
 .btn-primary:checked,
 .btn-primary:focus-visible,
-.btn-primary:checked,
 .btn-primary:disabled {
 	background-color: var(--colorBase);
 	border-color: var(--colorPrimary);
+	color: var(--colorPrimary);
 }
 
 .fillColoreSfondo {
@@ -55,84 +55,52 @@ a:hover {
 /* Stile per il bottone 'Torna in alto' */
 .back-to-top {
 	z-index: 999;
-	/* Assicura che il bottone sia sopra gli altri elementi */
 	position: fixed;
-	/* Posizione fissa sullo schermo */
 	bottom: 25px;
-	/* Distanza dal bordo inferiore */
 	right: 25px;
-	/* Distanza dal bordo destro */
 	display: none;
-	/* Nasconde il bottone di default */
 }
 
 /* Stile per sezioni con overflow orizzontale */
 .horizontal-scroll {
 	overflow-x: auto;
-	/* Abilita lo scroll orizzontale se necessario */
 	white-space: nowrap;
-	/* Impedisce la rottura delle righe */
 	display: flex;
-	/* Utilizza flexbox per l'allineamento interno */
-	-webkit-overflow-scrolling: touch;
-	/* Migliora lo scroll su dispositivi touch */
 	scrollbar-width: none;
-	/* Nasconde la barra di scorrimento */
+	/* Il momentum scrolling è comportamento predefinito su tutti i browser moderni,
+	   non richiede proprietà aggiuntive. */
 }
 
-/* Stile generale per contenitori */
+/* Contenitore sfondo chiaro (unificato, era duplicato) */
 .tutto {
 	background-color: rgba(255, 255, 255, 0.7);
-	/* Sfondo bianco semitrasparente */
-	border: 1px solid;
-	/* Bordo solido */
-	padding: 10px;
-	/* Padding interno */
-	box-shadow: 5px 10px 8px #888888;
-	/* Ombra esterna per effetto 3D */
-	vertical-align: middle;
-	/* Allineamento verticale */
-}
-
-.tutto {
-	background-color: rgba(255, 255, 255, 0.7);
-	/* Sfondo bianco semitrasparente */
 	border: 1px solid white;
-	/* Bordo solido */
 	padding: 10px;
-	/* Padding interno */
+	box-shadow: 5px 10px 8px #888888;
 	vertical-align: middle;
-	/* Allineamento verticale */
 }
 
-.tutto>a {
+.tutto>a:not(.btn) {
 	color: var(--colorLinkScuro);
 }
 
-/* Stile generale per contenitori */
+/* Contenitore sfondo scuro */
 .tutto-nero {
 	background-color: rgba(0, 0, 0, 0.7);
-	/* Sfondo bianco semitrasparente */
 	border: 1px solid black;
-	/* Bordo solido */
 	padding: 10px;
-	/* Padding interno */
 	vertical-align: middle;
-	/* Allineamento verticale */
 }
 
-.tutto-nero>a {
+.tutto-nero>a:not(.btn) {
 	color: var(--colorLinkChiaro);
 }
 
-/* Stile per i bordi dei contenitori */
+/* Bordi contenitori */
 .bordo {
 	border: 1px solid var(--colorPrimary);
-	/* Bordo solido */
 	padding: 10px;
-	/* Padding interno */
 	box-shadow: 5px 5px 4px var(--colorPrimaryScuro);
-	/* Ombra esterna più piccola */
 }
 
 .background-wrapper {
@@ -150,9 +118,7 @@ a:hover {
 	bottom: 0;
 	display: flex;
 	align-items: center;
-	/* Centra verticalmente */
 	justify-content: center;
-	/* Centra orizzontalmente */
 	text-align: center;
 }
 
@@ -161,68 +127,51 @@ a:hover {
 	background-repeat: no-repeat;
 }
 
-/* Stile per le righe (.row) */
 .row {
 	padding: 0;
-	/* Annulla il padding */
 	padding-top: 10px;
-	/* Padding superiore */
 }
 
 code {
 	font-weight: bold;
-	/*Grassetto per differenziare*/
 	color: black;
-	/* Sostituisci con il colore desiderato */
 	background-color: transparent;
-	/* Rendi lo sfondo trasparente o adattalo secondo necessità */
 }
 
-/* Stile per testo di piccole dimensioni */
+/* Dimensioni testo */
 .piccolill {
 	font-size: 0.5rem;
-	/* Dimensione molto piccola */
 }
 
 .piccolill-m {
 	font-size: 0.7rem;
-	/* Dimensione moderatamente piccola */
 }
 
-/* Stile per testo di grandi dimensioni */
 .grandill {
 	font-size: 1.3rem;
-	/* Dimensione grande */
 }
 
 .grandill-s {
 	font-size: 1rem;
-	/* Dimensione standard grande */
 }
 
 .grandill-m {
 	font-size: 1.5rem;
-	/* Dimensione molto grande */
 }
 
-/* Media query per schermi fino a 768px di larghezza */
+/* Mobile */
 @media only screen and (max-width: 768px) {
 	.container-fluid {
 		overflow-x: hidden;
-		/* Nasconde l'overflow orizzontale */
-		/* Commento: il problema dello scroll potrebbe essere causato da margini o padding esterni */
 	}
 }
 
-/* Stile per l'effetto hover 'muovi' */
+/* Effetto hover 'muovi' */
 .muovi:hover {
 	animation: shake 0.5s;
-	/* Avvia l'animazione 'shake' con durata di 0.5 secondi */
 	animation-iteration-count: infinite;
-	/* Ripete l'animazione all'infinito */
 }
 
-/* Definisce l'animazione 'shake' per l'effetto di scuotimento */
 @keyframes shake {
 
 	0%,
@@ -253,19 +202,43 @@ code {
 .carousel-item img {
 	height: 100%;
 	object-fit: cover;
-	/* Questa proprietà farà in modo che le immagini siano ritagliate per adattarsi, ma mantengano il loro aspetto */
 	width: 100%;
 }
 
-/* Media query per schermi oltre 768px di larghezza */
+/* Desktop zoom */
 @media only screen and (min-width: 768px) {
 	.zoomma {
 		transition: transform .2s;
-		/* Transizione fluida per l'effetto zoom */
 	}
 
 	.zoomma:hover {
 		transform: scale(1.5);
-		/* Aumenta la dimensione all'hover */
+	}
+}
+
+/* WCAG 2.1 AA — text-body-secondary di Bootstrap (#6c757d) ha contrasto ~4.48:1
+   su sfondo bianco, appena sotto la soglia di 4.5:1 per testo piccolo.
+   Sovrascriviamo con un grigio più scuro che supera la soglia. */
+.text-body-secondary {
+	color: #595f66 !important;
+}
+
+/* WCAG 2.2 — Rispetta la preferenza utente per ridurre le animazioni.
+   Obbligatorio per WCAG 2.1 Level AA criterio 2.3.3 */
+@media (prefers-reduced-motion: reduce) {
+	.muovi:hover {
+		animation: none;
+	}
+
+	.zoomma {
+		transition: none;
+	}
+
+	.zoomma:hover {
+		transform: none;
+	}
+
+	#back-to-top {
+		transition: none;
 	}
 }

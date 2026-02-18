@@ -16,17 +16,17 @@ class ServerToServer
     /**
      * Esegue una chiamata all'endpoint dell'API utilizzando il metodo HTTP specificato e restituisce la risposta.
      * 
-     * @param string $pathOrEndpoint Il percorso dell'endpoint o interno dell'API.
-     * @param string $metodo Il metodo HTTP da utilizzare per la chiamata (ad es. 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'). Di default è 'GET'.
-     * @param array $dati I dati da inviare con la richiesta, utili per i metodi come 'POST', 'PUT'.
-     * @param string $contentType Il Content Type della richiesta.
-     * @param array $headerPersonalizzati Header HTTP personalizzati da includere nella richiesta.
-     * @param int $timeoutTotale Il timeout totale per la richiesta in secondi. Di default è 30 secondi.
-     * @param int $timeoutConnessione Il timeout per la connessione in secondi. Di default è 10 secondi.
-     * @param bool $CheckSSL controllo gli SSL dell' endpoint?
-     * @return URLResponse Risposta dell'API
-     * @throws InvalidArgumentException Se i parametri obbligatori non sono validi.
-     * @throws Exception In caso di errore nella chiamata all'endpoint o nella risposta dell'API.
+     * @param string $url L'URL dell'endpoint.
+     * @param string $metodo Il metodo HTTP da utilizzare (ad es. 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'). Di default è 'GET'.
+     * @param array $dati I dati da inviare con la richiesta.
+     * @param string|null $contentType Il Content Type della richiesta.
+     * @param array $headerPersonalizzati Header HTTP personalizzati.
+     * @param int $timeoutTotale Il timeout totale in secondi. Di default è 30.
+     * @param int $timeoutConnessione Il timeout per la connessione in secondi. Di default è 10.
+     * @param bool $CheckSSL Controllo SSL dell'endpoint.
+     * @return URLResponse Risposta dell'API.
+     * @throws InvalidArgumentException Se l'URL non è valido.
+     * @throws Exception In caso di errore nella chiamata.
      */
     public static function callURL(
         string $url,
@@ -37,10 +37,11 @@ class ServerToServer
         int $timeoutTotale = 30,
         int $timeoutConnessione = 10,
         bool $CheckSSL = true
-    ) {
+    ): URLResponse {
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
             throw new InvalidArgumentException("L'URL fornito non è valido");
         }
+
         // Imposta il Content-Type predefinito in base al metodo
         if ($contentType === null) {
             $contentType = strtoupper($metodo) === "POST"
@@ -71,8 +72,6 @@ class ServerToServer
         ];
         $header = array_merge($header, $headerPersonalizzati);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-
-        // Imposta CURLOPT_RETURNTRANSFER per ottenere la risposta come stringa
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
         // Configura il metodo HTTP e il body della richiesta
@@ -80,7 +79,6 @@ class ServerToServer
             case "POST":
                 curl_setopt($ch, CURLOPT_POST, true);
                 if (!empty($dati)) {
-                    // Utilizza il formato corretto in base al content-type
                     $postData = ($contentType === 'application/x-www-form-urlencoded')
                         ? http_build_query($dati)
                         : json_encode($dati);
@@ -91,7 +89,7 @@ class ServerToServer
             case "PUT":
             case "PATCH":
             case "DELETE":
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $metodo);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($metodo));
                 if (!empty($dati)) {
                     $postData = ($contentType === 'application/x-www-form-urlencoded')
                         ? http_build_query($dati)
@@ -110,7 +108,6 @@ class ServerToServer
             $error = curl_error($ch);
             curl_close($ch);
 
-            // Timeout o altri errori
             if ($errorCode === CURLE_OPERATION_TIMEDOUT) {
                 throw new Exception("Timeout della richiesta raggiunto: " . $error);
             }
@@ -119,17 +116,17 @@ class ServerToServer
 
         // Controlla il codice HTTP della risposta
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        // Recupera il content type PRIMA di chiudere l'handle cURL
+        $responseContentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE) ?? '';
+
         if (!($httpCode >= 200 && $httpCode < 300)) {
             curl_close($ch);
             throw new Exception("Errore HTTP: " . $httpCode . " - Risposta: " . $response);
         }
 
-        // Chiudi la sessione cURL
+        // Chiudi la sessione cURL dopo aver letto tutte le info necessarie
         curl_close($ch);
 
-        // Restituisci il risultato con un oggetto URLResponse
-        return new URLResponse($response, curl_getinfo($ch, CURLINFO_CONTENT_TYPE));
+        return new URLResponse($response, $responseContentType);
     }
-
-
 }

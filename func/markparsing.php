@@ -2,9 +2,9 @@
 $k = 'text';
 require_once dirname(__DIR__) . '/FE_utils/funzioni.php';
 
-// Assicurati che l'input sia presente e pulito
 $input = isset($_GET[$k]) ? $_GET[$k] : '';
-$safeInput = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
 
-// Converte il Markdown in HTML
-echo Markdown_HTML($safeInput);
+// NON sanitizzare con htmlspecialchars PRIMA del parsing Markdown,
+// altrimenti la sintassi Markdown viene distrutta (es. **bold** → **bold**)
+// Parsedown gestisce internamente la sanitizzazione dell'output HTML.
+echo Markdown_HTML($input);

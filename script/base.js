@@ -14,11 +14,10 @@ inizializzazioneApp.then(() => {
 	 * Gestisce l'evento di scorrimento della finestra.
 	 */
 	$(window).scroll(function () {
-		// Controlla se lo scroll supera i 50 pixel dall'alto della pagina
 		if ($(this).scrollTop() > 50) {
-			$('#back-to-top').fadeIn(); // Mostra il pulsante 'back-to-top'
+			$('#back-to-top').fadeIn();
 		} else {
-			$('#back-to-top').fadeOut(); // Nasconde il pulsante
+			$('#back-to-top').fadeOut();
 		}
 	});
 
@@ -26,10 +25,9 @@ inizializzazioneApp.then(() => {
 	 * Gestisce il click sul pulsante 'back-to-top'.
 	 */
 	$('#back-to-top').click(function () {
-		// Anima lo scroll verso l'alto della pagina
 		$('body,html').animate({
 			scrollTop: 0
-		}, 400); // Durata dell'animazione: 400 millisecondi
+		}, 400);
 		return false;
 	});
 
@@ -39,18 +37,18 @@ inizializzazioneApp.then(() => {
 	var fumo = $('#smoke-effect-canvas');
 	if (fumo.length)
 		fumo.SmokeEffect({
-			color: fumo.data('color'), // Colore del fumo
-			opacity: fumo.data('opacity'), // Opacità del fumo
-			maximumVelocity: fumo.data('maximumVelocity'), // Velocità massima delle particelle
-			particleRadius: fumo.data('particleRadius'), // Raggio delle particelle di fumo
-			density: fumo.data('density') // Densità del fumo
+			color: fumo.data('color'),
+			opacity: fumo.data('opacity'),
+			maximumVelocity: fumo.data('maximumVelocity'),
+			particleRadius: fumo.data('particleRadius'),
+			density: fumo.data('density')
 		});
 
 	/**
 	 * Gestisce lo scorrimento orizzontale su elementi con classe 'horizontal-scroll'.
 	 */
 	$('.horizontal-scroll').on('wheel', function (event) {
-		event.preventDefault(); // Previene lo scorrimento verticale predefinito
+		event.preventDefault();
 		this.scrollLeft += event.originalEvent.deltaY + event.originalEvent.deltaX;
 	});
 
@@ -64,16 +62,7 @@ inizializzazioneApp.then(() => {
  */
 function openEncodedLink(prefix, encodedStr) {
 	var decodedString = encodedStr;
-	var url = "";
-
-	// Costruisce l'URL completo
-	if (prefix) {
-		url = prefix + decodedString;
-	} else {
-		url = decodedString;
-	}
-
-	// Reindirizza alla nuova URL
+	var url = prefix ? prefix + decodedString : decodedString;
 	window.location.href = url;
 }
 
@@ -82,7 +71,7 @@ function openEncodedLink(prefix, encodedStr) {
  * 
  * @param {string} src - Percorso dell'immagine da cui estrarre il colore medio.
  */
-function set_background_with_average_rgb(src) {
+function setBackgroundWithAverageRgb(src) {
 	var canvas = document.createElement('canvas');
 	var context = canvas.getContext('2d');
 	var img = new Image();
@@ -104,48 +93,42 @@ function set_background_with_average_rgb(src) {
 }
 
 /**
- * Copia un testo specificato nella clipboard del sistema.
- * 
- * Utilizza l'API Clipboard di navigator, se disponibile e il contesto è sicuro (https).
- * In caso contrario, ricorre a un metodo alternativo creando un'area di testo temporanea.
+ * Copia un testo nella clipboard del sistema.
+ * Usa l'API Clipboard (moderno) con fallback per contesti non sicuri.
  * 
  * @param {string} testoDaCopiare - Testo da copiare nella clipboard.
- * @param {string} idElemento - ID dell'elemento da cui ottenere il testo (usato nel metodo alternativo).
- * @returns {Promise} - Ritorna una Promise che risolve se la copia è riuscita, altrimenti la rifiuta.
- * 
- * Esempio di utilizzo:
- * copyToClipboard('Testo da copiare').then(() => {
- *     console.log('Testo copiato con successo!');
- * }).catch(() => {
- *     console.error('Errore nella copia del testo.');
- * });
+ * @returns {Promise} - Promise che risolve se la copia è riuscita.
  */
 function copyToClipboard(testoDaCopiare) {
-	// Controlla se l'API Clipboard di navigator è disponibile e se il contesto è sicuro (https)
+	// Clipboard API: disponibile in contesti sicuri (HTTPS)
 	if (navigator.clipboard && window.isSecureContext) {
-		// Usa il metodo writeText dell'API Clipboard di navigator per copiare il testo
 		return navigator.clipboard.writeText(testoDaCopiare);
-	} else {
-		// Metodo alternativo creando un elemento input temporaneo
-		let tempInput = document.createElement("input");
-		tempInput.style.position = "absolute";
-		tempInput.style.left = "-9999px";
-		tempInput.value = testoDaCopiare;
-		document.body.appendChild(tempInput);
-		tempInput.select();
-
-		// Crea una nuova Promise per gestire la copia
-		return new Promise((resolve, reject) => {
-			// Esegue il comando di copia e risolve o rifiuta la Promise in base al risultato
-			if (document.execCommand('copy')) {
-				resolve();
-			} else {
-				reject();
-			}
-			// Rimuove l'elemento temporaneo dal DOM
-			document.body.removeChild(tempInput);
-		});
 	}
+
+	// Fallback: usa textarea nascosta con Selection API (non deprecato, a differenza di execCommand)
+	return new Promise((resolve, reject) => {
+		const textarea = document.createElement('textarea');
+		textarea.value = testoDaCopiare;
+		// Posiziona fuori dallo schermo per evitare flash visivo
+		textarea.style.position = 'fixed';
+		textarea.style.left = '-9999px';
+		textarea.style.top = '-9999px';
+		textarea.style.opacity = '0';
+		document.body.appendChild(textarea);
+		textarea.focus();
+		textarea.select();
+
+		try {
+			// Nota: execCommand è deprecated ma è l'unico fallback
+			// per contesti non-HTTPS. In produzione, usa sempre HTTPS.
+			const successful = document.execCommand('copy');
+			document.body.removeChild(textarea);
+			successful ? resolve() : reject(new Error('Copy failed'));
+		} catch (err) {
+			document.body.removeChild(textarea);
+			reject(err);
+		}
+	});
 }
 
 /**
@@ -154,27 +137,22 @@ function copyToClipboard(testoDaCopiare) {
  * @param {Object} myobj - Selettore jQuery per identificare l'oggetto.
  * @param {number} durata - Durata dell'animazione in millisecondi.
  */
-function disattivaper(myobj, durata) {
-	// Funzione per aggiungere lo stile di caricamento e disabilitare l'oggetto
+function disattivaPer(myobj, durata) {
 	function iniziaCaricamento() {
 		myobj.prop('disabled', true).addClass('obj-loading');
 	}
 
-	// Funzione per aggiornare lo sfondo del oggetto
 	function updateProgress(value) {
 		var percentage = (value / durata) * 100;
 		myobj.css('background-size', percentage + '% 100%');
 	}
 
-	// Funzione per terminare il caricamento e riabilitare l'oggetto
 	function terminaCaricamento() {
 		myobj.prop('disabled', false).removeClass('obj-loading');
 	}
 
-	// Inizia l'animazione
 	iniziaCaricamento();
 
-	// Imposta un timer per riattivare l'oggetto dopo la durata specificata e aggiornare il progresso
 	var startTime = Date.now();
 	var interval = setInterval(function () {
 		var elapsedTime = Date.now() - startTime;
@@ -188,14 +166,12 @@ function disattivaper(myobj, durata) {
 }
 
 /**
- * Setta ala linga dell'applicativo
+ * Imposta la lingua dell'applicativo
  * @param {string} lang - codice lingua
  */
 function setLanguage(lang) {
 	let searchParams = new URLSearchParams(window.location.search);
-	searchParams.set('lang', lang); // Imposta o aggiorna il parametro 'lang'
-
-	// Costruisce l'URL con i parametri aggiornati
+	searchParams.set('lang', lang);
 	let newUrl = window.location.pathname + '?' + searchParams.toString() + window.location.hash;
-	window.location.href = newUrl; // Reindirizza l'utente all'URL aggiornato
+	window.location.href = newUrl;
 }

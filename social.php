@@ -2,7 +2,11 @@
 $title = "Social";
 include('FE_utils/TopPage.php');
 
-$social = $service->callApiEndpoint("social");
+$social = [];
+try {
+	$social = $service->callApiEndpoint("social");
+} catch (Exception $e) {
+}
 
 ?>
 <div class="container-fluid">

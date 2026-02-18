@@ -1,43 +1,49 @@
 <?php
 
 // Configurazione TOKEN
+// NOTA: cambia CRYPTO_KEY in produzione con una stringa di almeno 32 caratteri random
 define('CRYPTO_KEY', 'chiave_segretissima');
 define('TOKEN_EXPIRATION', 3000);
+define('CRYPTO_ALGO', 'aes-256-cbc');
 
 /**
  * Genera un token crittografato basato sulla password fornita e il timestamp corrente.
  *
+ * Il token contiene: IV random (16 byte) + ciphertext, codificati in base64.
+ * L'IV random per ogni token garantisce che lo stesso plaintext produca
+ * ciphertext diversi (requisito crittografico fondamentale di AES-CBC).
+ *
  * @param string $password La password fornita dall'utente.
- * @return array Un array contenente:
- *               - 'valid' (bool): Indica se l'operazione è andata a buon fine.
- *               - 'token' (string|null): Il token generato (se valido).
- *               - 'error' (string|null): Messaggio d'errore (se non valido).
- * @throws RuntimeException Se si verifica un errore durante la codifica JSON o la crittografia.
+ * @return array ['valid' => bool, 'token' => string|null, 'error' => string|null]
  */
 function generaToken(string $password): array
 {
     try {
-        // Verifica della password
         if ($password !== PASSWORD_TOKEN_CORRETTA) {
             throw new Exception('Password non corretta.');
         }
 
-        $timestamp = time();
         $dati = json_encode([
             'password' => $password,
-            'timestamp' => $timestamp
+            'timestamp' => time()
         ]);
 
         if ($dati === false) {
             throw new RuntimeException('Errore nella codifica JSON dei dati.');
         }
 
-        $iv = substr(CRYPTO_KEY, 0, 16); // Inizializzazione del vettore (IV)
-        $token = openssl_encrypt($dati, 'aes-256-cbc', CRYPTO_KEY, 0, $iv);
+        // IV random per ogni token (standard crittografico — mai riusare lo stesso IV)
+        $ivLength = openssl_cipher_iv_length(CRYPTO_ALGO);
+        $iv = openssl_random_pseudo_bytes($ivLength);
 
-        if ($token === false) {
+        $ciphertext = openssl_encrypt($dati, CRYPTO_ALGO, CRYPTO_KEY, OPENSSL_RAW_DATA, $iv);
+
+        if ($ciphertext === false) {
             throw new RuntimeException('Errore durante la crittografia.');
         }
+
+        // Token = base64(IV + ciphertext) — l'IV viene preposto al ciphertext
+        $token = base64_encode($iv . $ciphertext);
 
         return ['valid' => true, 'token' => $token];
     } catch (Exception $e) {
@@ -45,26 +51,37 @@ function generaToken(string $password): array
     }
 }
 
-// Funzione per verificare il token
-
 /**
  * Verifica la validità di un token crittografato.
  *
- * @param string $token Il token crittografato da verificare.
- * @return array Un array contenente:
- *               - 'valid' (bool): Indica se il token è valido.
- *               - 'error' (string|null): Messaggio d'errore (se non valido).
+ * Estrae l'IV dai primi 16 byte del token decodificato,
+ * poi decifra il ciphertext rimanente.
+ *
+ * @param string $token Il token crittografato (base64) da verificare.
+ * @return array ['valid' => bool, 'error' => string|null, 'code' => int]
  */
 function verificaToken(string $token): array
 {
     try {
-        $iv = substr(CRYPTO_KEY, 0, 16); // Inizializzazione del vettore (IV)
+        $raw = base64_decode($token, true);
+        if ($raw === false) {
+            throw new Exception('Token non valido (decodifica base64 fallita).', 401);
+        }
+
+        // Estrai IV (primi N byte) e ciphertext (il resto)
+        $ivLength = openssl_cipher_iv_length(CRYPTO_ALGO);
+        if (strlen($raw) < $ivLength) {
+            throw new Exception('Token troppo corto.', 401);
+        }
+
+        $iv = substr($raw, 0, $ivLength);
+        $ciphertext = substr($raw, $ivLength);
 
         // Decifra il token
-        $datiDecifrati = openssl_decrypt($token, 'aes-256-cbc', CRYPTO_KEY, 0, $iv);
+        $datiDecifrati = openssl_decrypt($ciphertext, CRYPTO_ALGO, CRYPTO_KEY, OPENSSL_RAW_DATA, $iv);
         if ($datiDecifrati === false) {
-            http_response_code(401); // Codice HTTP 401 Unauthorized
-            throw new Exception('Token non valido o corrotto.', 1001);
+            http_response_code(401);
+            throw new Exception('Token non valido o corrotto.', 401);
         }
 
         // Decodifica il JSON
@@ -83,10 +100,8 @@ function verificaToken(string $token): array
             throw new Exception('Token scaduto.', 401);
         }
 
-        // Se tutto è valido
         return ['valid' => true, 'error' => null, 'code' => 200];
     } catch (Exception $e) {
-        // Gestione delle eccezioni con codici HTTP già impostati sopra
         return [
             'valid' => false,
             'error' => $e->getMessage(),
@@ -103,33 +118,42 @@ require_once __DIR__ . '/Response.php';
 include __DIR__ . '/funzioni_comuni.php';
 
 
-$settingsfolder = "BLL/auth_settings/";
+$settingsFolder = "BLL/auth_settings/";
 
-$filePWD = BLL\Repository::findAPIPath() . $settingsfolder . 'pwd.txt';
-if (file_exists($filePWD))
-    define('PASSWORD_TOKEN_CORRETTA', BLL\Repository::getFileContent($filePWD));
+$filePwd = BLL\Repository::findAPIPath() . $settingsFolder . 'pwd.txt';
+if (file_exists($filePwd))
+    define('PASSWORD_TOKEN_CORRETTA', BLL\Repository::getFileContent($filePwd));
 else
     define('PASSWORD_TOKEN_CORRETTA', null);
 
 
+/**
+ * Ottiene il valore di un header HTTP in modo case-insensitive.
+ *
+ * @param array $headers Array degli header dalla richiesta.
+ * @param string $name Nome dell'header da cercare.
+ * @return string|null Valore dell'header o null se non trovato.
+ */
+function getHeaderCaseInsensitive(array $headers, string $name): ?string
+{
+    $nameLower = strtolower($name);
+    foreach ($headers as $key => $value) {
+        if (strtolower($key) === $nameLower) {
+            return $value;
+        }
+    }
+    return null;
+}
+
 // Ottiene tutti gli header della richiesta HTTP
 $headers = getallheaders();
 
-// Legge il file contenente le API keys autorizzate
-$paroleSegrete = file(BLL\Repository::findAPIPath() . $settingsfolder . 'APIKeys.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-// Controlla se l'header 'X-Api-Key' esiste e se corrisponde a una delle API keys autorizzate
-if (!isset($headers['X-Api-Key']) || !in_array($headers['X-Api-Key'], $paroleSegrete)) {
-    http_response_code(403); // Invia un codice di risposta HTTP 403 (Forbidden)
-    exit; // Termina l'esecuzione dello script
-}
-
-// Gestione delle impostazioni CORS
-$fileconfigCORS = BLL\Repository::findAPIPath() . $settingsfolder . "CORSconfig.json";
+// Gestione delle impostazioni CORS (prima del check API key per le preflight OPTIONS)
+$fileCorsConfig = BLL\Repository::findAPIPath() . $settingsFolder . "CORSconfig.json";
 // Controlla se esiste il file di configurazione CORS
-if (file_exists($fileconfigCORS)) {
+if (file_exists($fileCorsConfig)) {
     // Decodifica il file JSON di configurazione CORS
-    $config = json_decode(file_get_contents($fileconfigCORS), true);
+    $config = json_decode(file_get_contents($fileCorsConfig), true);
     $applyCORS = $config['applyCORS'];
 
     // Applica le impostazioni CORS se richiesto
@@ -148,9 +172,25 @@ if (file_exists($fileconfigCORS)) {
         }
 
         // Imposta gli altri header CORS per i metodi e gli header consentiti
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        header("Access-Control-Allow-Headers: Content-Type, Authorization");
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Key, Bearertoken");
+
+        // Gestione preflight OPTIONS: rispondi e termina senza validare API key
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(204);
+            exit;
+        }
     }
+}
+
+// Legge il file contenente le API keys autorizzate
+$apiKeys = file(BLL\Repository::findAPIPath() . $settingsFolder . 'APIKeys.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+// Controlla se l'header 'X-Api-Key' esiste e se corrisponde a una delle API keys autorizzate (case-insensitive)
+$apiKey = getHeaderCaseInsensitive($headers, 'X-Api-Key');
+if ($apiKey === null || !in_array($apiKey, $apiKeys)) {
+    http_response_code(403); // Invia un codice di risposta HTTP 403 (Forbidden)
+    exit; // Termina l'esecuzione dello script
 }
 
 
@@ -158,31 +198,35 @@ if (file_exists($fileconfigCORS)) {
  * Recupera i dati in "php://input"
  * @return mixed "php://input" Parsato se possibile
  */
-function datiinput()
+function datiInput()
 {
     $result = file_get_contents('php://input');
-    try {
-        return json_decode($result, true);
-    } catch (\Exception $e) {
-        parse_str($result, $rawData);
-        return $rawData;
+    $decoded = json_decode($result, true);
+
+    if ($decoded !== null || json_last_error() === JSON_ERROR_NONE) {
+        return $decoded;
     }
+
+    // Fallback: prova a parsare come form-urlencoded
+    parse_str($result, $rawData);
+    return $rawData;
 }
 
 // Funzione per estrarre e verificare il token dall'header "Bearertoken"
-function possoProcedere(): void
+function requiresToken(): void
 {
     $headers = getallheaders();
 
-    // Controlla se il token è presente nell'header
-    if (!isset($headers['Bearertoken'])) {
+    // Controlla se il token è presente nell'header (case-insensitive)
+    $token = getHeaderCaseInsensitive($headers, 'Bearertoken');
+    if ($token === null) {
         http_response_code(401); // Codice HTTP 401 Unauthorized
         echo BLL\Response::retError('Token assente', true);
         exit; // Termina l'esecuzione
     }
 
     // Verifica il token
-    $res = verificaToken($headers['Bearertoken']);
+    $res = verificaToken($token);
 
     if (!$res['valid']) {
         http_response_code($res['code']); // Imposta il codice HTTP

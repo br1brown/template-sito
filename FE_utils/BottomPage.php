@@ -1,5 +1,7 @@
 </main>
-<?php if (isset($footer) && $footer == true): ?>
+
+<?php
+if (isset($footer) && $footer == true): ?>
 	<footer style="font-size: 0.8rem;bottom: 0;" class="container-fluid mt-3 fillColoreSfondo <?= $clsTxt ?>">
 		<div class="container py-1">
 			<?php if (
@@ -75,8 +77,8 @@
 				$arrayURLFooter = [];
 				foreach ($url as $key => $val) {
 					$arrayURLFooter[] = new VoceInformazione($key, null, function ($val) use ($key, $service) {
-						if (!empty ($val)) {
-							return $service->CreateRouteLinkHTML($key, $val);
+						if (!empty($val)) {
+							return $service->createRouteLinkHTML($key, $val);
 						}
 						return null;
 					});
@@ -94,13 +96,13 @@
 
 			<div class="row">
 				<div class="col text-center">
-					<p>© 2024
-						<?= $service->CreateRouteLinkHTML($AppName, "index") ?> |
+					<p>© <?= date('Y') ?>
+						<?= $service->createRouteLinkHTML($AppName, "index") ?> |
 						<?= $service->traduci("dirittiriservati"); ?>.
-						<hr>
-						<span>
-							<?= $description ?>
-						</span>
+					</p>
+					<hr>
+					<p>
+						<?= $description ?>
 					</p>
 				</div>
 			</div>

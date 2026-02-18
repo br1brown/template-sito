@@ -1,12 +1,28 @@
 <?php
 require_once __DIR__ . '/parsedown-1.7.4/Parsedown.php';
 
-$parser = null;
+/**
+ * Converte una stringa Markdown in HTML sicuro.
+ *
+ * Usa Parsedown in safe mode: i tag HTML grezzi nel sorgente Markdown
+ * vengono escapati, prevenendo XSS. Il parser è condiviso tra le chiamate
+ * (static) per non istanziarlo ogni volta.
+ *
+ * Uso tipico in pagina:
+ *   echo Markdown_HTML($service->traduci("testo_con_markdown"));
+ *
+ * @param string $mark Testo in formato Markdown.
+ * @return string HTML generato, sicuro per l'output diretto.
+ */
 function Markdown_HTML($mark)
 {
+    static $parser = null;
 
-    if (!isset($parser))
+    if ($parser === null) {
         $parser = new Parsedown();
+        // Safe mode: previene XSS nell'output HTML generato dal Markdown
+        $parser->setSafeMode(true);
+    }
 
     return $parser->text($mark);
 

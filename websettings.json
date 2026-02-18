@@ -5,12 +5,6 @@
         "it": "Modello di base per dimostrare le funzionalità essenziali",
         "en": "Basic model to demonstrate essential functionality"
     },
-    "meta": {
-        "keywords": [
-            "xxx",
-            "xxxx"
-        ]
-    },
     "API": {
         "EndPoint": "API",
         "key": "frontend"

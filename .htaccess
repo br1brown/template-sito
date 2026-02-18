@@ -1,31 +1,54 @@
-<FilesMatch "^websettings.json$">
-    Deny from all
+RewriteEngine On
+
+# Cache-Control per asset statici
+# Font e icone: 1 anno (praticamente immutabili)
+<FilesMatch "\.(woff2?|ttf|eot|otf|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
 </FilesMatch>
 
+# Immagini: 30 giorni
+<FilesMatch "\.(png|jpe?g|gif|svg|webp)$">
+    Header set Cache-Control "public, max-age=2592000"
+</FilesMatch>
+
+# CSS e JS locali: 7 giorni (template che cambia raramente)
+<FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+</FilesMatch>
+
+# PHP (pagine dinamiche): no cache
+<FilesMatch "\.php$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+</FilesMatch>
+
+# Blocca accesso diretto a websettings.json
+<FilesMatch "^websettings\.json$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Blocca accesso alla directory parsedown
 RewriteRule ^parsedown-1\.7\.4/ - [F,L]
 
-
+# ErrorDocument (percorsi relativi per compatibilita' con sottocartelle)
 ErrorDocument 400 /error.php
 ErrorDocument 401 /error.php
 ErrorDocument 402 /error.php
 ErrorDocument 403 /error.php
 ErrorDocument 404 /error.php
 ErrorDocument 405 /error.php
-ErrorDocument 406 /error.php
-ErrorDocument 407 /error.php
 ErrorDocument 408 /error.php
-ErrorDocument 409 /error.php
 ErrorDocument 500 /error.php
-ErrorDocument 501 /error.php
 ErrorDocument 502 /error.php
 ErrorDocument 503 /error.php
 ErrorDocument 504 /error.php
-ErrorDocument 505 /error.php
-ErrorDocument 506 /error.php
-ErrorDocument 507 /error.php
-ErrorDocument 508 /error.php
-ErrorDocument 511 /error.php
 
-RewriteEngine On
+# URL rewriting: /pagina -> /pagina.php
 RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^\.]+)$ $1.php [NC,L]
