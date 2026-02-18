@@ -10,38 +10,22 @@ class Repository
     private static ?string $cachedAPIPath = null;
 
     /**
-     * Trova il percorso della directory 'API' partendo dalla directory corrente o da una specificata.
-     * Il risultato viene cachato per evitare ricerche ricorsive ripetute.
-     * 
-     * @param string $dir Percorso della directory da cui iniziare la ricerca.
+     * Restituisce il percorso assoluto della directory 'API/'.
+     * Calcolato una sola volta tramite __DIR__ (API/BLL → API/) per massima
+     * compatibilità con hosting condivisi (evita ricorsione e problemi open_basedir).
+     *
      * @return string|null Percorso della directory 'API' se trovata, altrimenti null.
      */
-    public static function findAPIPath(string $dir = __DIR__): ?string
+    public static function findAPIPath(): ?string
     {
-        // Restituisci dalla cache se già calcolato
         if (self::$cachedAPIPath !== null) {
             return self::$cachedAPIPath;
         }
 
-        $result = self::searchAPIPath($dir);
-        self::$cachedAPIPath = $result;
-        return $result;
-    }
-
-    /**
-     * Ricerca ricorsiva effettiva del percorso API.
-     */
-    private static function searchAPIPath(string $dir): ?string
-    {
-        $path = $dir . '/API/';
-
-        if (file_exists($path)) {
-            return $path;
-        } elseif ($dir === dirname($dir)) {
-            return null;
-        } else {
-            return self::searchAPIPath(dirname($dir));
-        }
+        // __DIR__ è API/BLL, dirname(__DIR__) è API/
+        $path = dirname(__DIR__) . '/';
+        self::$cachedAPIPath = file_exists($path) ? $path : null;
+        return self::$cachedAPIPath;
     }
 
     /**

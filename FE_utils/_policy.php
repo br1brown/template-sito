@@ -1,5 +1,5 @@
 <?php
-include('TopPage.php');
+include(__DIR__ . '/TopPage.php');
 $current_lang = $service->currentLang();
 $sezioniComuni = [
     [
@@ -64,6 +64,6 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
         </div>
     </div>
 </div>
-<?php include('BottomPage.php'); ?>
+<?php include(__DIR__ . '/BottomPage.php'); ?>
 
 </html>

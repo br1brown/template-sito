@@ -184,13 +184,19 @@ if (file_exists($fileCorsConfig)) {
 }
 
 // Legge il file contenente le API keys autorizzate
-$apiKeys = file(BLL\Repository::findAPIPath() . $settingsFolder . 'APIKeys.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$apiKeysFile = BLL\Repository::findAPIPath() . $settingsFolder . 'APIKeys.txt';
+// array_map('trim') rimuove \r\n e spazi residui (es. file modificato su Windows)
+$apiKeys = file_exists($apiKeysFile)
+    ? array_map('trim', file($apiKeysFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))
+    : [];
 
-// Controlla se l'header 'X-Api-Key' esiste e se corrisponde a una delle API keys autorizzate (case-insensitive)
+// Confronto case-insensitive tra la chiave ricevuta e quelle autorizzate
 $apiKey = getHeaderCaseInsensitive($headers, 'X-Api-Key');
-if ($apiKey === null || !in_array($apiKey, $apiKeys)) {
-    http_response_code(403); // Invia un codice di risposta HTTP 403 (Forbidden)
-    exit; // Termina l'esecuzione dello script
+$apiKeyNorm = $apiKey !== null ? strtolower(trim($apiKey)) : null;
+$apiKeysNorm = array_map('strtolower', $apiKeys);
+if ($apiKeyNorm === null || !in_array($apiKeyNorm, $apiKeysNorm)) {
+    http_response_code(403);
+    exit;
 }
 
 

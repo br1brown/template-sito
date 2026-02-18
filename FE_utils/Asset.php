@@ -6,6 +6,9 @@ class Asset
     private static function loadPaths()
     {
         $jsonPath = dirname(__DIR__) . '/asset/mapping.json'; // Percorso al file JSON
+        if (!file_exists($jsonPath)) {
+            throw new \RuntimeException("File asset mapping non trovato");
+        }
         return json_decode(file_get_contents($jsonPath), true);
     }
 

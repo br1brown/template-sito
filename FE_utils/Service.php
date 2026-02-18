@@ -289,7 +289,10 @@ class Service
     {
         $getFileList = function ($directory, $extension, $excludeFiles) {
             $fileList = array();
-            $resolved = realpath($directory);
+            // Percorso ancorato alla root del progetto per compatibilità con hosting condivisi
+            // dove cwd potrebbe non coincidere con la directory del progetto
+            $base = dirname(__DIR__);
+            $resolved = realpath($base . '/' . $directory);
             if ($resolved === false) return $fileList;
             $absolutePath = $resolved . '/';
             foreach (glob($absolutePath . "*." . $extension) as $file) {
