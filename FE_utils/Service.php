@@ -161,10 +161,10 @@ class Service
      */
     private function avviaSessione(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
+        if ($this->hasSessionIn()) {
             session_start([
                 'cookie_httponly' => true,   // Il cookie non è accessibile da JavaScript (protezione XSS)
-                'cookie_secure'   => $this->_isSecure, // Cookie solo su HTTPS se il sito è HTTPS
+                'cookie_secure' => $this->_isSecure, // Cookie solo su HTTPS se il sito è HTTPS
                 'cookie_samesite' => 'Lax',  // Protezione CSRF: cookie non inviato su richieste cross-site
             ]);
         }
@@ -589,6 +589,14 @@ class Service
     {
         $this->avviaSessione();
         return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && isset($_SESSION['Bearertoken']);
+    }
+
+    /**
+     * @return bool ha una sessione
+     */
+    public function hasSessionIn(): bool
+    {
+        return session_status() === PHP_SESSION_NONE;
     }
 
     /**
