@@ -198,7 +198,8 @@ class Service
         $this->baseUrl = $protocol . "://$_SERVER[HTTP_HOST]" . dirname($_SERVER['PHP_SELF']) . "/";
 
         // Caricamento impostazioni dal file JSON (percorso assoluto per compatibilità hosting)
-        $settingsPath = dirname($_SERVER['DOCUMENT_ROOT'] . $_SERVER['PHP_SELF']) . '/websettings.json';
+        // Uso __FILE__ per risalire alla root del progetto, più affidabile di DOCUMENT_ROOT su hosting condivisi
+        $settingsPath = dirname(__DIR__) . '/websettings.json';
         if (!file_exists($settingsPath)) {
             throw new \RuntimeException("File di configurazione websettings.json non trovato in: $settingsPath");
         }
