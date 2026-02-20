@@ -20,6 +20,7 @@ function makeGetQueryString(parametri) {
 
 
 function getApiUrl(action, params = null) {
+	if (!infoContesto.route.APIEndPoint) return null;
 	return infoContesto.route.APIEndPoint + "/" + action + makeGetQueryString(params);
 }
 
@@ -34,6 +35,10 @@ function getApiUrl(action, params = null) {
  * @param {string} [dataType='json'] - Il tipo di dati attesi nella risposta.
  */
 function apiCall(endpoint, data, callback = null, type = 'GET', modalOk = true, dataType = 'json') {
+	if (!infoContesto.route.APIEndPoint || !infoContesto.APIKey) {
+		console.warn('apiCall ignorata: API non configurata.');
+		return;
+	}
 	data.lang = infoContesto.lang;
 	var token = getBearertoken();
 
