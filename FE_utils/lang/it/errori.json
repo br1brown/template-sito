@@ -11,6 +11,7 @@
     "errore403Desc": "Non hai i permessi necessari per accedere a questa risorsa",
     "errore404Info": "Non Trovato",
     "errore404Desc": "La risorsa richiesta non è stata trovata sul server",
+    "erroreAPINonDisponibile": "Le API non sono raggiungibili",
     "errore405Info": "Metodo Non Permesso",
     "errore405Desc": "Il metodo HTTP usato non è consentito per la risorsa richiesta",
     "errore406Info": "Non Accettabile",

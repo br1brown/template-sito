@@ -65,5 +65,3 @@ $sezioniComplessive = array_merge($pagina, $sezioniComuni);
     </div>
 </div>
 <?php include(__DIR__ . '/BottomPage.php'); ?>
-
-</html>

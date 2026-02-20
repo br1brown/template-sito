@@ -37,8 +37,8 @@ template-sito/
 │
 ├── FE_utils/                 # Utilities frontend (PHP lato server)
 │   ├── Service.php           # Service layer: unico punto di accesso alle API e alle impostazioni
-│   ├── TopPage.php           # Include: apre <html>, <head>, <body>
-│   ├── BottomPage.php        # Include: chiude <main>, aggiunge footer, chiude <body>/<html>
+│   ├── TopPage.php           # Include: apre <html>, <head>, <body>, <main>
+│   ├── BottomPage.php        # Include: chiude <main>, aggiunge footer, chiude </body></html>
 │   ├── DTOWebsite.php        # DTO: RelLink, MetaDTO, VoceInformazione
 │   ├── Traduzione.php        # Gestione traduzioni
 │   ├── ServerToServer.php    # Chiamate HTTP server-to-server (cURL)
@@ -73,7 +73,8 @@ template-sito/
 │           └── CORSconfig.json         # Configurazione CORS
 │
 ├── script/                   # JavaScript frontend
-│   ├── base.js               # Inizializzazione app, chiamate API, lingua
+│   ├── lingua.js             # Caricamento traduzioni, funzione traduci()
+│   ├── base.js               # Definisce inizializzazioneApp, utility UI (scroll, clipboard, ecc.)
 │   ├── manageAPI.js          # Funzioni per le chiamate API dal frontend
 │   ├── manageMenu.js         # Gestione navbar e scroll
 │   └── addon.js              # Punto di estensione JS (aggiunto per ultimo)
@@ -180,8 +181,13 @@ include('FE_utils/TopPage.php');
     ?>
 </div>
 
+<script>
+inizializzazioneApp.then(() => {
+    // codice JS che richiede traduzioni/jQuery
+});
+</script>
+
 <?php include('FE_utils/BottomPage.php'); ?>
-</html>
 ```
 
 ### Metodi principali di `$service`
@@ -203,12 +209,26 @@ include('FE_utils/TopPage.php');
 
 ### Script di pagina inline
 
-Tutti gli script JS hanno `defer`, quindi vengono eseguiti dopo il DOM. Per eseguire codice dopo l'inizializzazione dell'app (che carica le traduzioni e imposta `infoContesto`), usare:
+`lingua.js` e `base.js` sono caricati **senza `defer`** e definiscono `traduzioneCaricata` e `inizializzazioneApp` in modo sincrono. Tutti gli altri script (jQuery, Bootstrap, SweetAlert, ecc.) usano `defer`.
+
+`inizializzazioneApp` è una Promise che si risolve quando le traduzioni sono caricate **e** tutti gli script `defer` sono eseguiti (`window load`). Per eseguire codice che usa traduzioni, jQuery o le API:
 
 ```javascript
 inizializzazioneApp.then(() => {
-    // il codice qui ha accesso a infoContesto, traduci(), callAPI(), ecc.
+    // qui sono disponibili: traduci(), $(), infoContesto, apiCall(), ecc.
 });
+```
+
+Lo script inline **deve stare prima** dell'include di `BottomPage.php`:
+
+```php
+<script>
+    inizializzazioneApp.then(() => {
+        // codice pagina
+    });
+</script>
+
+<?php include('FE_utils/BottomPage.php'); ?>
 ```
 
 ---
@@ -429,15 +449,16 @@ include('FE_utils/TopPage.php');
 
 <script>
 inizializzazioneApp.then(() => {
-    document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+    document.getElementById('loginForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
-        const result = await callAPI(infoContesto.route.APIEndPoint + '/logging', 'POST', {
-            pwd: document.getElementById('pwd').value
-        });
-        if (result.valid) location.reload();
-    });});
-
+        apiCall('logging', { pwd: document.getElementById('pwd').value }, function(result) {
+            if (result.valid) location.reload();
+        }, 'POST', false);
+    });
+});
 </script>
+
+<?php include('FE_utils/BottomPage.php'); ?>
 ```
 
 In alternativa, lato PHP si può usare direttamente:

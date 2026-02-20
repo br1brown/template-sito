@@ -111,3 +111,4 @@ if (isset($footer) && $footer == true): ?>
 <?php endif; ?>
 
 </body>
+</html>

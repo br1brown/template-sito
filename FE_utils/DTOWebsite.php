@@ -24,9 +24,21 @@ class RelLink
      */
     private function tipoAttrs(): ?array
     {
+        // lingua.js e base.js sono sincroni: definiscono traduzioneCaricata e
+        // inizializzazioneApp che gli script inline delle pagine usano direttamente.
+        // Tutti gli altri script usano defer.
+        $coreScripts = ['lingua.js', 'base.js'];
+        $isCore = false;
+        foreach ($coreScripts as $core) {
+            if (str_ends_with($this->url, $core)) {
+                $isCore = true;
+                break;
+            }
+        }
+
         return match ($this->type) {
             'css' => ['tag' => 'link', 'as' => 'style', 'attrs' => 'rel="stylesheet"'],
-            'js' => ['tag' => 'script', 'as' => 'script', 'attrs' => 'defer'],
+            'js' => ['tag' => 'script', 'as' => 'script', 'attrs' => $isCore ? '' : 'defer'],
             default => null,
         };
     }
@@ -34,11 +46,9 @@ class RelLink
     /**
      * Genera il tag HTML per includere la risorsa (<script> o <link rel="stylesheet">).
      *
-     * Tutti gli script JS usano defer: il browser li scarica in parallelo
-     * senza bloccare il rendering, eseguendoli in ordine dichiarato dopo il DOM.
-     * La catena (jQuery → Bootstrap → lingua.js → base.js → addon.js) è preservata
-     * perché defer garantisce l'ordine. Gli script inline di pagina devono wrappare
-     * il codice in window.addEventListener('load', ...) oppure usare inizializzazioneApp.then().
+     * lingua.js e base.js sono sincroni (no defer): definiscono traduzioneCaricata e
+     * inizializzazioneApp che gli script inline delle pagine usano direttamente.
+     * Tutti gli altri script JS usano defer per non bloccare il rendering.
      */
     public function visualizza(): string
     {

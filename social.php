@@ -2,9 +2,9 @@
 $title = "Social";
 include('FE_utils/TopPage.php');
 
-$social = [];
+$social = null;
 try {
-	$social = $service->callApiEndpoint("social");
+	$social = $service->callApiEndpoint("social") ?? null;
 } catch (Exception $e) {
 }
 
@@ -188,7 +188,6 @@ try {
 	</div>
 
 </div>
-<?php include('FE_utils/BottomPage.php'); ?>
 
 <script>
 	inizializzazioneApp.then(() => {
@@ -196,4 +195,4 @@ try {
 	});
 </script>
 
-</html>
+<?php include('FE_utils/BottomPage.php'); ?>

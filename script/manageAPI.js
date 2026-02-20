@@ -106,8 +106,13 @@ function handleError(xhr, status, error) {
 			const response = JSON.parse(xhr.responseText);
 			errorMessage = response.message || errorMessage;
 		} catch (e) {
-			// xhr.responseText non è JSON, usa il messaggio di errore generico
+			// responseText non è JSON: le API non sono raggiungibili/configurate
+			if (xhr.status === 404 || xhr.status === 500) {
+				errorMessage = traduci('erroreAPINonDisponibile');
+			}
 		}
+	} else if (xhr.status === 404 || xhr.status === 500) {
+		errorMessage = traduci('erroreAPINonDisponibile');
 	}
 	Swal.fire(errorInfo, errorMessage, 'error');
 }
@@ -127,7 +132,7 @@ function genericSuccess(response, callback, modalOk = true) {
 					callback(response);
 				}
 			});
-		else
+		else if (typeof callback === "function")
 			callback(response);
 	} else if (response.status === 'error') {
 		Swal.fire(traduci('errore'), traduci(response.message), 'error');

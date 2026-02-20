@@ -11,6 +11,7 @@
     "errore403Desc": "You do not have the necessary permissions to access this resource",
     "errore404Info": "Not Found",
     "errore404Desc": "The requested resource was not found on the server",
+    "erroreAPINonDisponibile": "The API is unreachable",
     "errore405Info": "Method Not Allowed",
     "errore405Desc": "The HTTP method used is not allowed for the requested resource",
     "errore406Info": "Not Acceptable",

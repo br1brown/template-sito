@@ -1,7 +1,11 @@
-// Aggrega tutte le dipendenze in una singola Promessa
+// Aggrega tutte le dipendenze in una singola Promessa.
+// inizializzazioneApp.then() è sicuro da usare in qualsiasi script inline
+// delle pagine: lingua.js e base.js sono sincroni, quindi questa variabile
+// è già definita quando lo script inline viene eseguito.
+// La Promise si risolve quando la traduzione è caricata e jQuery è pronto.
 var inizializzazioneApp = Promise.all([
 	traduzioneCaricata,
-	new Promise(resolve => $(document).ready(resolve))
+	new Promise(resolve => window.addEventListener('load', resolve))
 ]);
 
 

@@ -320,7 +320,7 @@ class Service
     public function APIbaseURL(string $path): string
     {
         if ($this->urlAPI === null) {
-            throw new \RuntimeException("API non configurata nel websettings.json");
+            throw new \BadMethodCallException("API non configurata nel websettings.json");
         }
         if (str_starts_with($path, "http://") || str_starts_with($path, "https://")) {
             return $path;
@@ -422,6 +422,7 @@ class Service
      * @param array       $dati           I dati da inviare nel body (POST) o query string (GET).
      * @param string|null $contentType    Content-Type della richiesta. Se null, viene dedotto dal metodo.
      * @return mixed Risposta decodificata (array per JSON, SimpleXMLElement per XML, string altrimenti).
+     * @throws \BadMethodCallException Se le API non sono configurate nel websettings.json (urlAPI === null).
      * @throws InvalidArgumentException Se $pathOrEndpoint è vuoto.
      * @throws Exception In caso di errore di rete o parsing della risposta.
      *
@@ -431,7 +432,7 @@ class Service
     public function callApiEndpoint(string $pathOrEndpoint, string $metodo = "GET", array $dati = [], ?string $contentType = null): mixed
     {
         if ($this->urlAPI === null) {
-            throw new \RuntimeException("API non configurata nel websettings.json");
+            throw new \BadMethodCallException("API non configurata nel websettings.json");
         }
         // Validazione del parametro $pathOrEndpoint
         if (empty($pathOrEndpoint)) {

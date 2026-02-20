@@ -361,13 +361,8 @@ $totalLanguages = count($lingueDisponibili);
 	</div>
 </div>
 
-<?php include('FE_utils/BottomPage.php'); ?>
 <script>
-	/* Gli script esterni usano defer, quindi vengono eseguiti dopo il DOM.
-	   Questo script inline è sincrono ma avvolge tutto in window.load,
-	   che scatta dopo i defer, garantendo che inizializzazioneApp sia disponibile. */
-	window.addEventListener('load', function () {
-		inizializzazioneApp.then(() => {
+	inizializzazioneApp.then(() => {
 			let imageCreata = null;
 			let markdownRenderTimer = null;
 
@@ -538,8 +533,6 @@ $totalLanguages = count($lingueDisponibili);
 			renderMarkdown();
 			loadSocial();
 			loadAsset();
-		});
-	}); // window.addEventListener('load')
+	});
 </script>
-
-</html>
+<?php include('FE_utils/BottomPage.php'); ?>
