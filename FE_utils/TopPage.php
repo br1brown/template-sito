@@ -78,7 +78,7 @@ try {
 		<?= ($meta->title == "" ? "" : htmlspecialchars($meta->title) . " | ") . htmlspecialchars($AppName); ?>
 	</title>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 	<meta name="description" content="<?= htmlspecialchars($meta->description) ?>">
 
@@ -137,11 +137,11 @@ try {
 		infoContesto = {
 			clsTxt: '<?= $clsTxt ?>',
 			EsternaAPI: <?= $service->EsternaAPI ? "true" : "false" ?>,
-			APIKey: '<?= $service->APIKey ?>',
+			APIKey: '<?= htmlspecialchars($service->APIKey ?? '', ENT_QUOTES) ?>',
 			lang: '<?= $service->currentLang() ?>',
 			route: {
 				traduzione: '<?= $service->pathLang ?>',
-				APIEndPoint: '<?= $service->urlAPI ?>',
+				APIEndPoint: '<?= htmlspecialchars($service->urlAPI ?? '', ENT_QUOTES) ?>',
 				<?php foreach ($routes as $singleRouting):
 					$v = basename($singleRouting, ".php");
 					echo "\n\t\t\t\t{$v}: '" . $service->baseURL('func/' . $v) . "',\n";

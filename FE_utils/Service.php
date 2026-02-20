@@ -129,7 +129,7 @@ class Service
     /**
      * @var string URL dell'API di servizio
      */
-    public string $urlAPI;
+    public ?string $urlAPI = null;
 
     /**
      * @var bool URL dell'API è esterna?
@@ -139,7 +139,7 @@ class Service
     /**
      * @var string Chiave dell'API di servizio
      */
-    public string $APIKey;
+    public ?string $APIKey = null;
 
     /**
      * @var string URL dell'Host
@@ -210,14 +210,15 @@ class Service
 
         $this->caricaLingua();
 
-        $this->APIKey = $this->settings['API']['key'];
-
-        $APIEndPoint = $this->settings['API']['EndPoint'];
-        $this->EsternaAPI = str_starts_with($APIEndPoint, "http://") || str_starts_with($APIEndPoint, "https://");
-        if ($this->EsternaAPI) {
-            $this->urlAPI = $APIEndPoint;
+        if (isset($this->settings['API'])) {
+            $this->APIKey = $this->settings['API']['key'];
+            $APIEndPoint = $this->settings['API']['EndPoint'];
+            $this->EsternaAPI = str_starts_with($APIEndPoint, "http://") || str_starts_with($APIEndPoint, "https://");
+            $this->urlAPI = $this->EsternaAPI ? $APIEndPoint : $this->baseUrl . $APIEndPoint;
         } else {
-            $this->urlAPI = $this->baseUrl . $APIEndPoint;
+            $this->APIKey = null;
+            $this->urlAPI = null;
+            $this->EsternaAPI = false;
         }
     }
 
@@ -318,6 +319,9 @@ class Service
      */
     public function APIbaseURL(string $path): string
     {
+        if ($this->urlAPI === null) {
+            throw new \RuntimeException("API non configurata nel websettings.json");
+        }
         if (str_starts_with($path, "http://") || str_starts_with($path, "https://")) {
             return $path;
         } else {
@@ -426,6 +430,9 @@ class Service
      */
     public function callApiEndpoint(string $pathOrEndpoint, string $metodo = "GET", array $dati = [], ?string $contentType = null): mixed
     {
+        if ($this->urlAPI === null) {
+            throw new \RuntimeException("API non configurata nel websettings.json");
+        }
         // Validazione del parametro $pathOrEndpoint
         if (empty($pathOrEndpoint)) {
             throw new InvalidArgumentException("Il parametro 'pathOrEndpoint' non può essere vuoto.");

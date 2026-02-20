@@ -29,6 +29,11 @@ if ($data === null || !isset($data['url'], $data['type'], $data['XApiKey'])) {
 // Protezione SSRF: verifica che l'URL richiesto abbia lo stesso host dell'endpoint API configurato
 // Confronto sull'host (non sul prefisso stringa) per evitare bypass tipo api.example.com.attacker.com
 $service = new Service();
+if ($service->urlAPI === null) {
+    http_response_code(503);
+    echo json_encode(['status' => 'error', 'message' => 'API non configurata']);
+    exit;
+}
 $apiBase = rtrim($service->urlAPI, '/');
 
 $parsedApiBase = parse_url($apiBase);
