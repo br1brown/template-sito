@@ -405,9 +405,13 @@ class Service
      * @param string $ID Identificativo dell'asset.
      * @return string URL completo dell'asset.
      */
-    public function UrlAsset(string $ID): string
+    public function UrlAsset(string $ID, ?int $w = null, ?int $h = null, bool $stretch = false): string
     {
-        return self::baseURL("func/getAsset?ID=" . $ID);
+        $url = "func/getAsset?ID=" . $ID;
+        if ($w !== null) $url .= "&w=" . $w;
+        if ($h !== null) $url .= "&h=" . $h;
+        if ($stretch && $w !== null && $h !== null) $url .= "&stretch=1";
+        return self::baseURL($url);
     }
 
     /**

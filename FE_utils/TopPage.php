@@ -119,6 +119,7 @@ try {
 	<meta name="mobile-web-app-capable" content="<?= $meta->FullScreenWebApp ? "yes" : "no" ?>">
 
 	<link rel="icon" type="image/png" href="<?= $service->UrlAsset("favIcon") ?>">
+	<link rel="apple-touch-icon" href="<?= $service->UrlAsset("favIcon", 512) ?>">
 
 	<!-- Contesto JS globale: espone token, configurazione e rotte al frontend -->
 	<script>

@@ -13,7 +13,21 @@ $manifest = [
     'start_url' => $service->baseUrl,
     'display' => 'browser',
     'background_color' => $settings["colori"]['colorBase'] ?? '#ffffff',
-    'theme_color' => $settings["colori"]['colorTema'] ?? '#212529'
+    'theme_color' => $settings["colori"]['colorTema'] ?? '#212529',
+    'icons' => [
+        [
+            'src'     => $service->UrlAsset('favIcon', 192),
+            'sizes'   => '192x192',
+            'type'    => 'image/png',
+            'purpose' => 'any maskable'
+        ],
+        [
+            'src'     => $service->UrlAsset('favIcon', 512),
+            'sizes'   => '512x512',
+            'type'    => 'image/png',
+            'purpose' => 'any maskable'
+        ]
+    ]
 ];
 
 // Usiamo JSON_UNESCAPED_UNICODE per caratteri accentati e JSON_UNESCAPED_SLASHES per URL puliti.
