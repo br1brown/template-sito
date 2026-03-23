@@ -1,0 +1,5 @@
+# Dev: bind mount per hot reload (caricato automaticamente)
+services:
+  template-sito:
+    volumes:
+      - .:/var/www/html

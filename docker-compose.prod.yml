@@ -1,0 +1,8 @@
+# Prod: solo dati persistenti (usare con: docker compose -f docker-compose.yml -f docker-compose.prod.yml up)
+services:
+  template-sito:
+    volumes:
+      - template-sito-data:/var/www/html/API/data
+
+volumes:
+  template-sito-data:

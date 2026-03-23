@@ -1,0 +1,10 @@
+services:
+  template-sito:
+    build: .
+    ports:
+      - "8008:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.template-sito.rule=Host(`template-sito.localhost`)"
+      - "traefik.http.services.template-sito.loadbalancer.server.port=80"
+    restart: unless-stopped

@@ -1,2 +1,5 @@
 ﻿API/data/*
 asset/cache
+
+# Docker
+.env.docker
